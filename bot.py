@@ -5,7 +5,8 @@
 #  [ ] add /compare <currency name> see data about currency from diffrent bank
 #  [ ] add parsers autodiscovery (provide some common interface)
 #  [*] add some kind of memoization 
-
+#  [ ] display exchange change rates
+#      e.g. /diff <bank name> -c<currency name> -d<number of days since now> -t<type (text by default)>
 import os
 import time
 import datetime
