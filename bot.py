@@ -4,14 +4,20 @@
 #  [ ] add /course bank <bank name> to see data about courses in the given bank
 #  [ ] add /compare <currency name> see data about currency from diffrent bank
 #  [ ] add parsers autodiscovery (provide some common interface)
+#  [*] add some kind of memoization 
 
 import os
+import time
+import datetime
+import logging
 
 from telegram import Updater
 
 from bank_parsers import BelgazpromParser
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
+CACHE_EXPIRACY_MINUTES = 60
+
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
@@ -21,6 +27,32 @@ if not api_token:
 updater = Updater(token=api_token)
 
 dispatcher = updater.dispatcher
+
+parsers = [BelgazpromParser]
+default_parser = BelgazpromParser
+cache = {p.short_name: {} for p in parsers}
+
+
+def get_parser(parser_name):
+
+    if cache.get(parser_name, ''):
+        parser_dict = cache.get(parser_name)
+        cached_at = parser_dict['cached_at']
+        now = datetime.datetime.now()
+        is_valid = (now - cached_at).seconds / 60 < CACHE_EXPIRACY_MINUTES
+        cached_parser = parser_dict.get('parser', None)
+        if is_valid and cached_parser:
+            logging.info("Using cached parser.")
+            return cached_parser
+
+    for parser in parsers:
+        if parser.short_name == parser_name:
+            selected_parser = parser()
+            logging.info("Parser found. Caching.")
+            cache[parser_name] = {'cached_at': datetime.datetime.now(),
+                                  'parser': selected_parser}
+            return selected_parser
+    raise ValueError("Incorrect parser name: {}".format(parser_name))
 
 
 def start(bot, update):
@@ -45,8 +77,8 @@ def caps(bot, update, args):
 
 def course(bot, update, args):
     if not args:
-        belgazrprom = BelgazpromParser()
-        all_currencies = belgazrprom.currencies
+        parser = get_parser(default_parser.short_name)
+        all_currencies = parser.currencies
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
                             for x in all_currencies]
 
@@ -55,8 +87,8 @@ def course(bot, update, args):
                         text="Currencies: \n{}".format(currencies_text_value))
         return
     if len(args) == 1:
-        belgazrprom = BelgazpromParser()
-        cur = belgazrprom.get_currency(currency_name=args[0])
+        parser = get_parser(default_parser.short_name)
+        cur = parser.get_currency(currency_name=args[0])
         if cur.name == 'NoValue':
             bot.sendMessage(chat_id=update.message.chat_id,
                             text="Unknown currency: {}".format(args[0]))

@@ -1,3 +1,4 @@
+import datetime
 from collections import namedtuple
 
 from bs4 import BeautifulSoup
@@ -10,11 +11,15 @@ Currency = namedtuple('Currency', "name iso sell buy")
 class BelgazpromParser(object):
 
     URL = 'http://belgazprombank.by/about/kursi_valjut/'
+    name = 'Белгазпромбанк'
+    short_name = 'bgp'
 
     def __init__(self):
-        self._soup = BeautifulSoup(requests.get(BelgazpromParser.URL).text)
+        self._soup = BeautifulSoup(requests.get(BelgazpromParser.URL).text, "html.parser")
         self._currency_table = self.__get_currency_table()
         self.currencies = self.__get_currency_objects()
+        self.name = BelgazpromParser.name
+        self.short_name = BelgazpromParser.short_name
 
     def __get_currency_table(self):
         return self._soup.find(id="courses_tab1_form").parent
