@@ -13,9 +13,19 @@ class BelgazpromParser(object):
     URL = 'http://belgazprombank.by/about/kursi_valjut/'
     name = 'Белгазпромбанк'
     short_name = 'bgp'
+    MINIMAL_DATE = datetime.datetime(year=2004, month=5, day=1)
+    allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR', 'GBP', 'UAH', 'CHF', 'PLN')
 
-    def __init__(self):
-        self._soup = BeautifulSoup(requests.get(BelgazpromParser.URL).text, "html.parser")
+    def __init__(self, *args, **kwargs):
+        url_params = {}
+        if kwargs.get('date', ''):
+            url_params['date'] = kwargs.get('date')
+
+        self._response = requests.get(BelgazpromParser.URL, params=url_params)
+        self._soup = BeautifulSoup(
+            self._response.text,
+            "html.parser"
+        )
         self._currency_table = self.__get_currency_table()
         self.currencies = self.__get_currency_objects()
         self.name = BelgazpromParser.name
@@ -24,10 +34,12 @@ class BelgazpromParser(object):
     def __get_currency_table(self):
         return self._soup.find(id="courses_tab1_form").parent
 
-    def __get_currency_objects(self):
-        exchange_table = self._currency_table.find('table').find('tbody')
-        exchange_rows = exchange_table.find_all('tr')
-        return [BelgazpromParser.__currency_object_from_row(row) for row in exchange_rows]
+    def __get_currency_objects(self, days_since_now=None):
+        if not days_since_now:
+            exchange_table = self._currency_table.find('table').find('tbody')
+            exchange_rows = exchange_table.find_all('tr')
+            return [BelgazpromParser.__currency_object_from_row(row) for row in exchange_rows]
+        # TODO: add data display for the date in the past
 
     @classmethod
     def __currency_object_from_row(cls, row_object):
