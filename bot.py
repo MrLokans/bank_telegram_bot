@@ -8,11 +8,13 @@
 #  [ ] display exchange change rates
 #      e.g. /diff <bank name> -c<currency name> -d<number of days since now> -t<type (text by default)>
 #  [*] add exchange rate display for the given date
+#  [ ] show graphs with exchange rate for the given number of days
 import os
 import datetime
 import logging
 
 from telegram import Updater
+from telegram.ext.dispatcher import run_async
 
 from bank_parsers import BelgazpromParser
 
@@ -35,6 +37,8 @@ dispatcher = updater.dispatcher
 
 parsers = [BelgazpromParser]
 default_parser = BelgazpromParser
+
+# We initialise cache for different parsers
 cache = {p.short_name: {} for p in parsers}
 
 
@@ -80,6 +84,7 @@ def caps(bot, update, args):
     bot.sendMessage(chat_id=update.message.chat_id, text=text_caps)
 
 
+@run_async
 def course(bot, update, args):
     if not args:
         parser = get_parser(default_parser.short_name)
@@ -122,10 +127,14 @@ def course(bot, update, args):
                         text="Currencies: \n{}".format(currencies_text_value))
         return
 
+def show_currency_graph(bot, update, args):
+    pass
+
 
 dispatcher.addTelegramCommandHandler('caps', caps)
 dispatcher.addTelegramCommandHandler('start', start)
 dispatcher.addTelegramCommandHandler('echo', echo)
 dispatcher.addTelegramCommandHandler('course', course)
+dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
 dispatcher.addUnknownTelegramCommandHandler(unknown)
 updater.start_polling()
