@@ -1,3 +1,5 @@
+# coding: utf-8
+
 # TODO:
 #  [ ] add 'help' function that displays usage
 #  [ ] add '/course bank list' option to dispay banks choices
@@ -9,27 +11,44 @@
 #      e.g. /diff <bank name> -c<currency name> -d<number of days since now> -t<type (text by default)>
 #  [*] add exchange rate display for the given date
 #  [ ] show graphs with exchange rate for the given number of days
+#  [ ] replace BS with lxml to speedup page parsing
+#  [ ] Add more verbose logging and logging to file
+#  [ ] Rotate image cache to not overflow disk (say limit to 500 mb)
+
 import os
 import datetime
+
+
 import logging
 
+import telegram
 from telegram import Updater
 from telegram.ext.dispatcher import run_async
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from bank_parsers import BelgazpromParser
 
 from utils import (
-    get_date_arg, get_date_from_date_diff, str_from_date, debug_msg
+    get_date_arg, get_date_from_date_diff, str_from_date
 )
+
+
+# add extra styling for our graphs
+sns.set_style("darkgrid")
+
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
+IMAGES_FOLDER = "img"
 
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
-    raise ValueError("No API token specified.")
+    # raise ValueError("No API token specified.")
+    api_token = "210968547:AAEpY71MEoTUXMq9j_UulRXM03N4fdHolCs"
 
 updater = Updater(token=api_token)
 
@@ -85,16 +104,18 @@ def caps(bot, update, args):
 
 
 @run_async
-def course(bot, update, args):
+def course(bot, update, args, **kwargs):
+    chat_id = update.message.chat_id
     if not args:
         parser = get_parser(default_parser.short_name)
         parser_instance = parser()
-        all_currencies = parser_instance.currencies
+        all_currencies = parser_instance.get_all_currencies()
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
                             for x in all_currencies]
 
         currencies_text_value = "\n".join(displayed_values)
-        bot.sendMessage(chat_id=update.message.chat_id,
+        bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+        bot.sendMessage(chat_id=chat_id,
                         text="Currencies: \n{}".format(currencies_text_value))
         return
     if len(args) >= 1:
@@ -110,25 +131,72 @@ def course(bot, update, args):
             cur = parser_instance.get_currency(currency_name=args[0])
 
             if cur.name == 'NoValue':
-                bot.sendMessage(chat_id=update.message.chat_id,
+                bot.sendMessage(chat_id=chat_id,
                                 text="Unknown currency: {}".format(args[0]))
                 return
             else:
                 text = "{}: {} {}".format(cur.iso, cur.sell, cur.buy)
-                bot.sendMessage(chat_id=update.message.chat_id,
+                bot.sendMessage(chat_id=chat_id,
                                 text=text)
                 return
-        all_currencies = parser_instance.currencies
+        all_currencies = parser_instance.get_all_currencies()
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
                             for x in all_currencies]
 
         currencies_text_value = "\n".join(displayed_values)
-        bot.sendMessage(chat_id=update.message.chat_id,
+        bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+        bot.sendMessage(chat_id=chat_id,
                         text="Currencies: \n{}".format(currencies_text_value))
         return
 
+
 def show_currency_graph(bot, update, args):
-    pass
+    """Sends user currency graph changes for the specified period of time.
+    E.g. user wants to get exchange rates for the US currency for 10 last days,
+    he needs to send something like '/graph USD -d 10' """
+    chat_id = update.message.chat_id
+    bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+    # if len(args) == 0:
+    #     bot.sendMessage(chat_id=chat_id,
+    #                     text="Incorrect parameters")
+    #     return
+
+    # Add user input data extraction!
+    currency = "USD"
+    # TODO: I didn't really think that I would need to parse
+    # every single day... Data parsing for multiple days
+    # should be completely changed
+    date_diff = 10
+
+    logging.info("Creating a plot.")
+    x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    y = [20100, 19222, 10000, 21000, 21110, 22500, 19700, 20100, 20100, 20150]
+    plt.plot(x, y)
+
+    out_file = os.path.join(IMAGES_FOLDER, "output.png")
+    try:
+        os.mkdir(IMAGES_FOLDER)
+    except OSError:
+        pass
+    plt.savefig(out_file)
+
+    logging.info("Image created, uploading...")
+    bot.sendPhoto(chat_id=chat_id,
+                  photo=open(out_file))
+    return
+
+
+def generate_plot_name(bank_name, currency_name, start_date, end_date):
+    name = "{}_{}_{}_{}.png".format(bank_name,
+                                    currency_name,
+                                    start_date,
+                                    end_date)
+
+    return name
+
+
+def is_image_cached(image_path):
+    return os.path.exists(image_path)
 
 
 dispatcher.addTelegramCommandHandler('caps', caps)
