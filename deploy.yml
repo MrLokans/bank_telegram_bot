@@ -1,0 +1,69 @@
+---
+- hosts: mrlokans
+  become: true
+  become_method: sudo
+
+  vars:
+    - project_repo: https://github.com/MrLokans/bank_telegram_bot
+    - project_root_dir: /opt/telegram_bot/
+    - project_virtualenv_folder: /opt/telegram_bot/venv/
+    - bot_api_token: "{{  lookup('file', 'credentials')  }}"
+
+  tasks:
+    - name: Update the packages list
+      when: ansible_os_family == 'Debian'
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    
+    - name: Install Supervisord,GCC fortran compliler and extra libraries
+      when: ansible_os_family == 'Debian'
+      apt: name={{ item }} state=present
+      with_items: 
+        - supervisor
+        - gfortran
+        - libfreetype6-dev
+        - libxft-dev
+        - libblas-dev 
+        - liblapack-dev 
+        - libatlas-base-dev
+
+    - name: Copy supervisord config file
+      template:
+        src: templates/supervisord.conf
+        dest: /etc/supervisord.conf
+
+    - name: Ensure former installation is removed
+      file:
+        dest: "{{ project_root_dir }}"
+        state: absent
+
+    - name: Ensure project directory is created successfuly
+      file:
+        dest: "{{ project_root_dir }}"
+        state: directory
+
+    - name: Checkout bot's repository
+      git:
+        repo: "{{ project_repo }}"
+        dest: "{{ project_root_dir }}"
+
+    - name: Create python's virtual environment
+      command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }} --no-site-packages
+
+    - name: Install bot's dependencies
+      pip:
+        requirements="{{ project_root_dir }}"bot/requirements.txt 
+        virtualenv="{{ project_virtualenv_folder }}"  
+      notify: restart supervisord
+
+    - name: Ensure supervisord is running
+      service:
+        name: supervisord
+        state: running
+        enabled: yes
+
+
+  handlers:
+    - name: restart supervisord
+      service: name=supervisor state=restarted
