@@ -32,7 +32,8 @@ import seaborn as sns
 from bank_parsers import BelgazpromParser
 
 from utils import (
-    get_date_arg, get_date_from_date_diff, str_from_date
+    get_date_arg, get_date_from_date_diff, str_from_date,
+    date_diffs_for_long_diff
 )
 
 
@@ -174,19 +175,18 @@ def show_currency_graph(bot, update, args):
     # TODO: I didn't really think that I would need to parse
     # every single day... Data parsing for multiple days
     # should be completely changed
-    days_diff = 10
+    days_diff = 11
 
-    current_date = datetime.date.today()
-    former_date = get_date_from_date_diff(days_diff)
+    date_diffs = date_diffs_for_long_diff(days_diff)
 
-    current_rate = parser_instance.get_currency(currency_name=currency,
-                                                date=current_date)
-    former_rate = parser_instance.get_currency(currency_name=currency,
-                                               date=former_date)
+    dates = [get_date_from_date_diff(d) for d in date_diffs]
+    currencies = [parser_instance.get_currency(currency_name=currency,
+                                               date=d)
+                  for d in dates]
 
     logging.info("Creating a plot.")
-    x = [former_date, current_date]
-    y = [former_rate.buy, current_rate.sell]
+    x = [d for d in dates]
+    y = [c.buy for c in currencies]
 
     # Extra setupto orrectly display dates on X-axis
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
@@ -216,7 +216,7 @@ def generate_plot_name(bank_name, currency_name, start_date, end_date):
     return name
 
 
-def is_image_cached(image_path):
+def is_image_cached(image_path, max_n=8):
     return os.path.exists(image_path)
 
 

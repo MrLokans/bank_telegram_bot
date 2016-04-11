@@ -95,6 +95,10 @@ class BelgazpromParser(object):
     #     currencies = self.__get_currency_objects(currency_table)
     #     return currencies
 
+    def get_currency_for_diff_date(self, diff_days, currency="USD"):
+        former_date = datetime.date.today - datetime.timedelta(days=diff_days)
+        return self.get_currency(currency, date=former_date)
+
     def get_currency(self, currency_name="USD", date=None):
         # TODO: requires heavy optimization or caching
         if date is None:

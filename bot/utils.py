@@ -31,3 +31,22 @@ def str_from_date(date):
 
 def debug_msg(msg):
     print("DEBUG: {}".format(msg))
+
+
+def date_diffs_for_long_diff(day_diff, min_n=8, max_n=10):
+    """
+        Takes number of days and splits it into a list of diffs
+    """
+
+    if 1 <= day_diff <= max_n:
+        return [i for i in range(day_diff+1)]
+    else:
+        for i in range(min_n, max_n+1):
+            if day_diff % i == 0:
+                den = day_diff // i
+                return [x * den for x in range(0, i + 1)]
+        portion = day_diff // (max_n - 1)
+        rest = day_diff - (portion * (max_n - 1))
+        result = [x * portion for x in range(0, max_n - 1)]
+        result.append(rest + result[-1])
+        return result
