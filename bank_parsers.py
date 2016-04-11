@@ -65,27 +65,42 @@ class BelgazpromParser(object):
     def get_all_data(self):
         return [tuple(cur) for cur in self.currencies]
 
-    def get_all_currencies(self, diff_days=None):
-        if diff_days is not None:
-            try:
-                diff_days = int(diff_days)
-            except ValueError:
-                diff_days = 0
-        else:
-            diff_days = 0
+    def get_all_currencies(self, date=None):
+        # TODO: check if string is supplied as date
+        if date is None:
+            date = datetime.date.today()
+        assert isinstance(date, datetime.date), "Incorrect date supplied"
 
-        current_date = datetime.date.today()
-        former_date = current_date - datetime.timedelta(days=diff_days)
-
-        r = self.__get_exchange_rate_for_the_date(former_date)
+        r = self.__get_exchange_rate_for_the_date(date)
         s = self.__soup_from_request(r)
         currency_table = self.__get_currency_table(s)
         currencies = self.__get_currency_objects(currency_table)
         return currencies
 
-    def get_currency(self, currency_name="USD", diff_days=None):
+    # def get_all_currencies(self, diff_days=None):
+    #     if diff_days is not None:
+    #         try:
+    #             diff_days = int(diff_days)
+    #         except ValueError:
+    #             diff_days = 0
+    #     else:
+    #         diff_days = 0
+
+    #     current_date = datetime.date.today()
+    #     former_date = current_date - datetime.timedelta(days=diff_days)
+
+    #     r = self.__get_exchange_rate_for_the_date(former_date)
+    #     s = self.__soup_from_request(r)
+    #     currency_table = self.__get_currency_table(s)
+    #     currencies = self.__get_currency_objects(currency_table)
+    #     return currencies
+
+    def get_currency(self, currency_name="USD", date=None):
         # TODO: requires heavy optimization or caching
-        currencies = self.get_all_currencies(self, diff_days)
+        if date is None:
+            date = datetime.date.today()
+        assert isinstance(date, datetime.date), "Incorrect date supplied"
+        currencies = self.get_all_currencies(date)
 
         for cur in currencies:
             if currency_name.upper() == cur.iso:

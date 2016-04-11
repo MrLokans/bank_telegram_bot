@@ -26,6 +26,7 @@ from telegram import Updater
 from telegram.ext.dispatcher import run_async
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
 
 from bank_parsers import BelgazpromParser
@@ -47,8 +48,7 @@ IMAGES_FOLDER = "img"
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
-    # raise ValueError("No API token specified.")
-    api_token = "210968547:AAEpY71MEoTUXMq9j_UulRXM03N4fdHolCs"
+    raise ValueError("No API token specified.")
 
 updater = Updater(token=api_token)
 
@@ -106,6 +106,8 @@ def caps(bot, update, args):
 @run_async
 def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
+
+    # By default show data for the current day
     if not args:
         parser = get_parser(default_parser.short_name)
         parser_instance = parser()
@@ -124,11 +126,11 @@ def course(bot, update, args, **kwargs):
         days_diff = get_date_arg(args)
 
         old_date = get_date_from_date_diff(days_diff)
-        old_date = str_from_date(old_date)
-        parser_instance = parser(date=old_date)
+        parser_instance = parser()
 
         if args[0].upper() in parser.allowed_currencies:
-            cur = parser_instance.get_currency(currency_name=args[0])
+            cur = parser_instance.get_currency(currency_name=args[0],
+                                               date=old_date)
 
             if cur.name == 'NoValue':
                 bot.sendMessage(chat_id=chat_id,
@@ -156,22 +158,41 @@ def show_currency_graph(bot, update, args):
     he needs to send something like '/graph USD -d 10' """
     chat_id = update.message.chat_id
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+
+    # TODO: find out what data are we looking for:
+    # sell or buy rates or display both
+
     # if len(args) == 0:
     #     bot.sendMessage(chat_id=chat_id,
     #                     text="Incorrect parameters")
     #     return
 
     # Add user input data extraction!
+    parser = get_parser(default_parser.short_name)
+    parser_instance = parser()
     currency = "USD"
     # TODO: I didn't really think that I would need to parse
     # every single day... Data parsing for multiple days
     # should be completely changed
-    date_diff = 10
+    days_diff = 10
+
+    current_date = datetime.date.today()
+    former_date = get_date_from_date_diff(days_diff)
+
+    current_rate = parser_instance.get_currency(currency_name=currency,
+                                                date=current_date)
+    former_rate = parser_instance.get_currency(currency_name=currency,
+                                               date=former_date)
 
     logging.info("Creating a plot.")
-    x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    y = [20100, 19222, 10000, 21000, 21110, 22500, 19700, 20100, 20100, 20150]
+    x = [former_date, current_date]
+    y = [former_rate.buy, current_rate.sell]
+
+    # Extra setupto orrectly display dates on X-axis
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
     plt.plot(x, y)
+    plt.gcf().autofmt_xdate()
 
     out_file = os.path.join(IMAGES_FOLDER, "output.png")
     try:
