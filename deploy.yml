@@ -10,13 +10,13 @@
     - bot_api_token: "{{  lookup('file', 'credentials')  }}"
 
   tasks:
-    - name: Update the packages list
+    - name: Update the packages list (Debian)
       when: ansible_os_family == 'Debian'
       apt:
         update_cache: yes
         cache_valid_time: 3600
-    
-    - name: Install Supervisord,GCC fortran compliler and extra libraries
+
+    - name: (Debian) Install Supervisord,GCC fortran compliler and extra libraries
       when: ansible_os_family == 'Debian'
       apt: name={{ item }} state=present
       with_items: 
@@ -27,6 +27,21 @@
         - libblas-dev 
         - liblapack-dev 
         - libatlas-base-dev
+
+    - name: Update virtualenv version on RedHat
+      pip: name=virtualenv state=latest
+      when: ansible_os_family == 'RedHat'
+
+    - name: (RedHat) Install Supervisord,GCC fortran compliler and extra libraries
+      when: ansible_os_family == 'RedHat'
+      yum: name={{ item }} state=present update_cache=yes
+      with_items: 
+        - supervisor
+        - gcc-gfortran
+        - python34
+        - freetype-devel
+        - libpng-devel
+        - python34-devel.x86_64 
 
     - name: Copy supervisord config file
       template:
