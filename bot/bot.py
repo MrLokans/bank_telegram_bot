@@ -171,43 +171,56 @@ def show_currency_graph(bot, update, args):
     # Add user input data extraction!
     parser = get_parser(default_parser.short_name)
     parser_instance = parser()
+
     currency = "USD"
-    # TODO: I didn't really think that I would need to parse
-    # every single day... Data parsing for multiple days
-    # should be completely changed
+
     days_diff = 11
 
     date_diffs = date_diffs_for_long_diff(days_diff)
 
     dates = [get_date_from_date_diff(d) for d in date_diffs]
-    currencies = [parser_instance.get_currency(currency_name=currency,
-                                               date=d)
-                  for d in dates]
+    past_date, future_date = dates[0], dates[-1]
+    plot_image_name = generate_plot_name(default_parser.short_name, currency,
+                                         past_date, future_date)
 
-    logging.info("Creating a plot.")
-    x = [d for d in dates]
-    y = [c.buy for c in currencies]
+    out_file = os.path.join(IMAGES_FOLDER, plot_image_name)
 
-    # Extra setupto orrectly display dates on X-axis
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
-    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-    plt.plot(x, y)
-    plt.gcf().autofmt_xdate()
+    if not is_image_cached(out_file):
 
-    out_file = os.path.join(IMAGES_FOLDER, "output.png")
-    try:
-        os.mkdir(IMAGES_FOLDER)
-    except OSError:
-        pass
-    plt.savefig(out_file)
+        currencies = [parser_instance.get_currency(currency_name=currency,
+                                                   date=d)
+                      for d in dates]
 
-    logging.info("Image created, uploading...")
+        logging.info("Creating a plot.")
+        x = [d for d in dates]
+        y = [c.buy for c in currencies]
+
+        # Extra setupto orrectly display dates on X-axis
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+        plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+        plt.plot(x, y)
+        plt.gcf().autofmt_xdate()
+
+        try:
+            os.mkdir(IMAGES_FOLDER)
+        except OSError:
+            pass
+        plt.savefig(out_file)
+
     bot.sendPhoto(chat_id=chat_id,
                   photo=open(out_file))
     return
 
 
 def generate_plot_name(bank_name, currency_name, start_date, end_date):
+    if isinstance(start_date, datetime.date) or\
+       isinstance(start_date, datetime.datetime):
+        start_date = start_date.strftime("%d-%m-%Y")
+
+    if isinstance(end_date, datetime.date) or\
+       isinstance(end_date, datetime.datetime):
+        end_date = end_date.strftime("%d-%m-%Y")
+
     name = "{}_{}_{}_{}.png".format(bank_name,
                                     currency_name,
                                     start_date,
