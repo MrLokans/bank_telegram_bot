@@ -175,19 +175,31 @@ def show_currency_graph(bot, update, args):
     days_diff = 10
     currency = "USD"
 
+    parser = get_parser(default_parser.short_name)
+    parser_instance = parser()
+
     for i, arg in enumerate(args):
         if arg == "-d":
             if i < len(args) - 1:
                 # Handle non-int input
-                days_diff = int(args[i+1])
+                try:
+                    days_diff = int(args[i+1])
+                except ValueError:
+                    bot.sendMessage(chat_id=chat_id,
+                                    text="Wrong day diff format, please specifiy integerr number in range 2-2400")
+                    return
+                if days_diff < 2 or days_diff > 2400:
+                    bot.sendMessage(chat_id=chat_id,
+                                    text="Wrong day diff format, please specifiy integerr number in range 2-2400")
+                    return
         if arg == "-c":
             if i < len(args) - 1:
                 # Validate currency
                 currency = args[i+1]
-
-    # Add user input data extraction!
-    parser = get_parser(default_parser.short_name)
-    parser_instance = parser()
+                if currency not in parser.allowed_currencies:
+                    bot.sendMessage(chat_id=chat_id,
+                                    text="Invalid currency, valid options are: [{}]".format(", ".join(parser.allowed_currencies)))
+                    return
 
     date_diffs = date_diffs_for_long_diff(days_diff)
 
