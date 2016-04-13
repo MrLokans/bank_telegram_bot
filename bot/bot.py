@@ -49,7 +49,10 @@ IMAGES_FOLDER = "img"
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
-    raise ValueError("No API token specified.")
+    # Only for development purposes
+    with open("../credentials") as f:
+        api_token = f.read()
+    # raise ValueError("No API token specified.")
 
 updater = Updater(token=api_token)
 
@@ -168,13 +171,22 @@ def show_currency_graph(bot, update, args):
     #                     text="Incorrect parameters")
     #     return
 
+    days_diff = 10
+    currency = "USD"
+
+    for i, arg in enumerate(args):
+        if arg == "-d":
+            if i < len(args) - 1:
+                # Handle non-int input
+                days_diff = int(args[i+1])
+        if arg == "-c":
+            if i < len(args) - 1:
+                # Validate currency
+                currency = args[i+1]
+
     # Add user input data extraction!
     parser = get_parser(default_parser.short_name)
     parser_instance = parser()
-
-    currency = "USD"
-
-    days_diff = 11
 
     date_diffs = date_diffs_for_long_diff(days_diff)
 
@@ -223,8 +235,8 @@ def generate_plot_name(bank_name, currency_name, start_date, end_date):
 
     name = "{}_{}_{}_{}.png".format(bank_name,
                                     currency_name,
-                                    start_date,
-                                    end_date)
+                                    end_date,
+                                    start_date)
 
     return name
 
