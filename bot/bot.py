@@ -218,12 +218,15 @@ def show_currency_graph(bot, update, args):
 
         logging.info("Creating a plot.")
         x = [d for d in dates]
-        y = [c.buy for c in currencies]
+        y_buy = [c.buy for c in currencies]
+        y_sell = [c.sell for c in currencies]
 
         # Extra setupto orrectly display dates on X-axis
         plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
         plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-        plt.plot(x, y)
+        plt.plot(x, y_buy, label='Buy')
+        plt.plot(x, y_sell, label='Sell')
+        plt.legend()
         plt.gcf().autofmt_xdate()
 
         try:
