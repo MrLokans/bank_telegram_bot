@@ -10,10 +10,11 @@
 #  [ ] display exchange change rates
 #      e.g. /diff <bank name> -c<currency name> -d<number of days since now> -t<type (text by default)>
 #  [*] add exchange rate display for the given date
-#  [ ] show graphs with exchange rate for the given number of days
+#  [*] show graphs with exchange rate for the given number of days
 #  [ ] replace BS with lxml to speedup page parsing
 #  [ ] Add more verbose logging and logging to file
 #  [ ] Rotate image cache to not overflow disk (say limit to 500 mb)
+#  [ ] On big date differences date on the plot are hardly distinctable
 
 import os
 import datetime
@@ -218,6 +219,8 @@ def show_currency_graph(bot, update, args):
         except OSError:
             pass
         plt.savefig(out_file)
+        plt.clf()
+        plt.cla()
 
     bot.sendPhoto(chat_id=chat_id,
                   photo=open(out_file))
