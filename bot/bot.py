@@ -38,6 +38,12 @@ from utils import (
 )
 
 
+logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+
 # add extra styling for our graphs
 sns.set_style("darkgrid")
 
@@ -45,6 +51,10 @@ sns.set_style("darkgrid")
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
+
+cache = {}
+parsers = []
+default_parser = None
 
 
 api_token = os.environ.get(API_ENV_NAME, '')
@@ -54,16 +64,6 @@ if not api_token:
     with open("../credentials") as f:
         api_token = f.read()
     # raise ValueError("No API token specified.")
-
-updater = Updater(token=api_token)
-
-dispatcher = updater.dispatcher
-
-parsers = [BelgazpromParser]
-default_parser = BelgazpromParser
-
-# We initialise cache for different parsers
-cache = {p.short_name: {} for p in parsers}
 
 
 def get_parser(parser_name):
@@ -93,19 +93,13 @@ def start(bot, update):
                     text="I'm a bot, please talk to me!")
 
 
-def echo(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id,
-                    text=update.message.text)
-
-
 def unknown(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Sorry, I didn't understand that command.")
 
 
-def caps(bot, update, args):
-    text_caps = ' '.join(args).upper()
-    bot.sendMessage(chat_id=update.message.chat_id, text=text_caps)
+def error(bot, update, error):
+    logger.warn('Update "%s" caused error "%s"' % (update, error))
 
 
 @run_async
@@ -263,10 +257,32 @@ def is_image_cached(image_path, max_n=8):
     return os.path.exists(image_path)
 
 
-dispatcher.addTelegramCommandHandler('caps', caps)
-dispatcher.addTelegramCommandHandler('start', start)
-dispatcher.addTelegramCommandHandler('echo', echo)
-dispatcher.addTelegramCommandHandler('course', course)
-dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
-dispatcher.addUnknownTelegramCommandHandler(unknown)
-updater.start_polling()
+def main():
+    updater = Updater(token=api_token)
+
+    dispatcher = updater.dispatcher
+
+    global parsers
+    parsers = [BelgazpromParser]
+
+    global default_parser
+    default_parser = BelgazpromParser
+
+    # We initialise cache for different parsers
+    global cache
+    cache = {p.short_name: {} for p in parsers}
+
+    dispatcher.addTelegramCommandHandler('start', start)
+    dispatcher.addTelegramCommandHandler('course', course)
+    dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
+
+    dispatcher.addUnknownTelegramCommandHandler(unknown)
+    # log all errors
+    dispatcher.addErrorHandler(error)
+
+    updater.start_polling()
+    updater.idle()
+
+
+if __name__ == '__main__':
+    main()
