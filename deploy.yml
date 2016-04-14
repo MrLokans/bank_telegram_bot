@@ -8,6 +8,7 @@
     - project_root_dir: /opt/telegram_bot/
     - project_virtualenv_folder: /opt/telegram_bot/venv/
     - bot_api_token: "{{  lookup('file', 'credentials')  }}"
+    - bot_supervisor_owner: mrlokans
 
   tasks:
     - name: Update the packages list (Debian)
@@ -34,19 +35,33 @@
 
     - name: (RedHat) Install Supervisord,GCC fortran compliler and extra libraries
       when: ansible_os_family == 'RedHat'
-      yum: name={{ item }} state=present update_cache=yes
+      yum: name={{ item }} state=latest update_cache=yes
+      ignore_errors: True
+
       with_items: 
         - supervisor
         - gcc-gfortran
         - python34
         - freetype-devel
         - libpng-devel
-        - python34-devel.x86_64 
+        - python34-devel 
+        - python34-Cython
+        - python34-numpy
+        - python-matplotlib
+        - python-scipy
+        - python-pandas
 
     - name: Copy supervisord config file
       template:
         src: templates/supervisord.conf
         dest: /etc/supervisord.conf
+
+    - name: Copy supervisord telegram config file
+      template:
+        src: templates/telegram_botd.conf
+        dest: /etc/telegram_botd.conf
+
+
 
     - name: Ensure former installation is removed
       file:
@@ -63,12 +78,28 @@
         repo: "{{ project_repo }}"
         dest: "{{ project_root_dir }}"
 
-    - name: Create python's virtual environment
-      command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }} --no-site-packages
+    - name: Set permissions for the project folder, to correctly run application with supervisord
+      file:
+        path: "{{ project_root_dir }}"
+        owner: mrlokans
+        group: mrlokans
+        recurse: yes
+        state: directory
 
-    - name: Install bot's dependencies
+    - name: Create python's virtual environment
+      command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }}
+
+    - name: Install bot's dependencies (Debian)
+      when: ansible_os_family == 'Debian'
       pip:
         requirements="{{ project_root_dir }}"bot/requirements.txt 
+        virtualenv="{{ project_virtualenv_folder }}"  
+      notify: restart supervisord
+
+    - name: Install bot's dependencies (RedHat)
+      when: ansible_os_family == 'RedHat'
+      pip:
+        requirements="{{ project_root_dir }}"bot/redhat_requirements.txt 
         virtualenv="{{ project_virtualenv_folder }}"  
       notify: restart supervisord
 
@@ -81,4 +112,4 @@
 
   handlers:
     - name: restart supervisord
-      service: name=supervisor state=restarted
+      service: name=supervisord state=restarted
