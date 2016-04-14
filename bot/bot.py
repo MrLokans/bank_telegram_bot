@@ -60,10 +60,7 @@ default_parser = None
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
-    # Only for development purposes
-    with open("../credentials") as f:
-        api_token = f.read()
-    # raise ValueError("No API token specified.")
+    raise ValueError("No API token specified.")
 
 
 def get_parser(parser_name):
@@ -232,7 +229,7 @@ def show_currency_graph(bot, update, args):
         plt.cla()
 
     bot.sendPhoto(chat_id=chat_id,
-                  photo=open(out_file))
+                  photo=open(out_file, 'rb'))
     return
 
 
