@@ -17,6 +17,7 @@
       - libblas-dev 
       - liblapack-dev 
       - libatlas-base-dev
+      - mongodb-org
 
   - name: Update virtualenv version on RedHat
     pip: name=virtualenv state=latest
@@ -39,6 +40,7 @@
       - python-matplotlib
       - python-scipy
       - python-pandas
+      - mongodb-org
 
   - name: Copy supervisord config file
     template:
@@ -73,6 +75,9 @@
       group: mrlokans
       recurse: yes
       state: directory
+
+  - name: Set up mongoDB
+    mongodb_user: database={{ mongo_db }} name={{ mongo_user }} password={{ mongo_password }} state=present
 
   - name: Create python's virtual environment
     command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }}

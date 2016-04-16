@@ -2,12 +2,75 @@
 
 import datetime
 from collections import namedtuple
+import logging
 
 from bs4 import BeautifulSoup
 import requests
+import pymongo
 
+import settings
+
+logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 Currency = namedtuple('Currency', "name iso sell buy")
+
+
+class MongoCurrencyCache(object):
+    def __init__(self):
+        self.server_delay = 10
+        self.is_storage_available = False
+        try:
+            self._client = pymongo.MongoClient(settings.MONGO_HOST,
+                                               settings.MONGO_PORT,
+                                               serverSelectionTimeoutMS=self.server_delay)
+            self._client.server_info()
+            self._db = self._client[settings.MONGO_DATABASE]
+            self._db.authenticate(settings.MONGO_USER,
+                                  settings.MONGO_PASSWORD,
+                                  mechanism='SCRAM-SHA-1')
+            self._collection = self._db[settings.MONGO_COLLECTION]
+            self.is_storage_available = True
+        except pymongo.errors.ServerSelectionTimeoutError:
+            self.is_storage_available = False
+
+    def get_cached_value(self, bank_name, cur_name, date_str):
+        if not self.is_storage_available:
+            logger.info("Currency requested from cache but cache is unavailable.")
+            return None
+        search_key = "{}_{}_{}".format(bank_name.lower(),
+                                       cur_name.lower(),
+                                       date_str.lower())
+        item = self._collection.find({"currency_key": search_key})
+        if item:
+            item = Currency(cur_name.upper(),
+                            cur_name.upper(),
+                            item['sell_value'],
+                            item['buy_value'])
+            return item
+        return None
+
+    def cache_currency(self, bank_name, cur_instance,
+                       date_str):
+        dbg_msg = "Trying to cache currency {}-{}-{} in cache.".format(
+            bank_name, cur_instance.sell, date_str
+        )
+        logger.debug(dbg_msg)
+
+        if not self.is_storage_available:
+            logger.info("Cache is unavailable.")
+            return False
+        save_key = "{}_{}_{}".format(bank_name.lower(),
+                                     cur_instance.iso.lower(),
+                                     date_str.lower())
+        item = {
+            "currency_key": save_key,
+            "buy_value": cur_instance.buy,
+            "sell_value": cur_instance.sell
+        }
+        self._collection.insert(item)
 
 
 class BelgazpromParser(object):
@@ -23,6 +86,7 @@ class BelgazpromParser(object):
     def __init__(self, *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
+        self._cache = MongoCurrencyCache()
 
     # TODO: caching!
     def __get_exchange_rate_for_the_date(self, d):
@@ -104,10 +168,20 @@ class BelgazpromParser(object):
         if date is None:
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
+
+        str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
+        cached_item = self._cache.get_cached_value(self.short_name,
+                                                   currency_name,
+                                                   str_date)
+        if cached_item:
+            logger.info("Cached value found {}, returning".format(cached_item))
+            return cached_item
+
         currencies = self.get_all_currencies(date)
 
         for cur in currencies:
             if currency_name.upper() == cur.iso:
+                self._cache.cache_currency(self.short_name, cur, str_date)
                 return cur
         else:
             return Currency('NoValue', '', '', '')
