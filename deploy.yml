@@ -7,15 +7,15 @@
     - project_repo: https://github.com/MrLokans/bank_telegram_bot
     - project_root_dir: /opt/telegram_bot/
     - project_virtualenv_folder: /opt/telegram_bot/venv/
-    - bot_api_token: "{{ lookup('ini', 'token section=telegram file=credentials') }}"
+    - bot_api_token: "{{ lookup('ini', 'token section=telegram file=credentials.ini') }}"
     - bot_supervisor_owner: mrlokans
 
-    - mongo_host: "{{ lookup('ini', 'mongo_host section=mongo file=credentials') }}"
-    - mongo_port: "{{ lookup('in_port section=mongo file=credentials') }}"
-    - mongo_db: "{{ lookup('ini', 'mongo_db section=mongo file=credentials') }}"
-    - mongo_collection: "{{ lookup('ini', 'mongo_collection section=mongo file=credentials') }}"
-    - mongo_user: "{{ lookup('ini', 'mongo_user section=mongo file=credentials') }}"
-    - mongo_password: "{{ lookup('ini', 'mongo_password section=mongo file=credentials') }}"
+    - mongo_host: "{{ lookup('ini', 'mongo_host section=mongo file=credentials.ini') }}"
+    - mongo_port: "{{ lookup('ini', 'mongo_port section=mongo file=credentials.ini') }}"
+    - mongo_db: "{{ lookup('ini', 'mongo_db section=mongo file=credentials.ini') }}"
+    - mongo_collection: "{{ lookup('ini', 'mongo_collection section=mongo file=credentials.ini') }}"
+    - mongo_user: "{{ lookup('ini', 'mongo_user section=mongo file=credentials.ini') }}"
+    - mongo_password: "{{ lookup('ini', 'mongo_password section=mongo file=credentials.ini') }}"
 
   roles:
     # - { role: telegrambot,  project_repo: "{{ project_repo }}", 
