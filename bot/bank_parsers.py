@@ -26,11 +26,10 @@ class MongoCurrencyCache(object):
             self._client = pymongo.MongoClient(settings.MONGO_HOST,
                                                int(settings.MONGO_PORT),
                                                serverSelectionTimeoutMS=self.server_delay)
+            self._client.api.authenticate(settings.MONGO_USER,
+                                          settings.MONGO_PASSWORD,)
             self._client.server_info()
             self._db = self._client[settings.MONGO_DATABASE]
-            self._db.authenticate(settings.MONGO_USER,
-                                  settings.MONGO_PASSWORD,
-                                  mechanism='SCRAM-SHA-1')
             self._collection = self._db[settings.MONGO_COLLECTION]
             self.is_storage_available = True
         except pymongo.errors.ServerSelectionTimeoutError:
