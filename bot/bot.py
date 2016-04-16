@@ -1,7 +1,7 @@
 # coding: utf-8
 
 # TODO:
-#  [ ] add 'help' function that displays usage
+#  [*] add 'help' function that displays usage
 #  [ ] add '/course bank list' option to dispay banks choices
 #  [ ] add /course bank <bank name> to see data about courses in the given bank
 #  [ ] add /compare <currency name> see data about currency from diffrent bank
@@ -15,7 +15,10 @@
 #  [*] Add more verbose logging and logging to file
 #  [ ] Rotate image cache to not overflow disk (say limit to 500 mb)
 #  [ ] On big date differences date on the plot are hardly distinctable
-#  [ ] Turn playbook into role
+#  [*] Turn playbook into role
+#  [ ] Turn mongo installation into separate playbook
+#  [ ] Cache exchange requests
+
 
 import os
 import datetime

@@ -24,7 +24,7 @@ class MongoCurrencyCache(object):
         self.is_storage_available = False
         try:
             self._client = pymongo.MongoClient(settings.MONGO_HOST,
-                                               settings.MONGO_PORT,
+                                               int(settings.MONGO_PORT),
                                                serverSelectionTimeoutMS=self.server_delay)
             self._client.server_info()
             self._db = self._client[settings.MONGO_DATABASE]
