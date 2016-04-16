@@ -12,9 +12,10 @@
 #  [*] add exchange rate display for the given date
 #  [*] show graphs with exchange rate for the given number of days
 #  [ ] replace BS with lxml to speedup page parsing
-#  [ ] Add more verbose logging and logging to file
+#  [*] Add more verbose logging and logging to file
 #  [ ] Rotate image cache to not overflow disk (say limit to 500 mb)
 #  [ ] On big date differences date on the plot are hardly distinctable
+#  [ ] Turn playbook into role
 
 import os
 import datetime
@@ -250,6 +251,20 @@ def generate_plot_name(bank_name, currency_name, start_date, end_date):
     return name
 
 
+def help_user(bot, update, args):
+    chat_id = update.message.chat_id
+    help_message = """Use following commands:
+/course [<currency_short_name>] - display current exchange rate for the
+given currency or for all available currencies.
+/graph -d <days ago> -c <currency name> - plot currency exchange
+rate dynamincs for the specified period of time
+"""
+    bot.sendMessage(chat_id=chat_id,
+                    text=help_message)
+
+    return
+
+
 def is_image_cached(image_path, max_n=8):
     return os.path.exists(image_path)
 
@@ -270,6 +285,7 @@ def main():
     cache = {p.short_name: {} for p in parsers}
 
     dispatcher.addTelegramCommandHandler('start', start)
+    dispatcher.addTelegramCommandHandler('help', help_user)
     dispatcher.addTelegramCommandHandler('course', course)
     dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
 
