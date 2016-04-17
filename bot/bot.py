@@ -247,7 +247,7 @@ def render_exchange_rate_plot(x_axe, y_buy, y_sell, output_file):
     plt.legend()
     plt.gcf().autofmt_xdate()
 
-    plt.savefig(out_file)
+    plt.savefig(output_file)
     return plt
 
 
