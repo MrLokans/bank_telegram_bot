@@ -47,7 +47,7 @@ class MongoCurrencyCache(object):
         search_key = "{}_{}_{}".format(bank_name.lower(),
                                        cur_name.lower(),
                                        date_str.lower())
-        item = self._collection.find({"currency_key": search_key})
+        item = self._collection.find_one({"currency_key": search_key})
         if item:
             item = Currency(cur_name.upper(),
                             cur_name.upper(),
