@@ -205,9 +205,14 @@ def show_currency_graph(bot, update, args):
     plot_image_name = generate_plot_name(default_parser.short_name, currency,
                                          past_date, future_date)
 
-    out_file = os.path.join(IMAGES_FOLDER, plot_image_name)
+    if not os.path.exists(IMAGES_FOLDER):
+        try:
+            os.mkdir(IMAGES_FOLDER)
+        except OSError as e:
+            logger.error("Error creating images folder: ".format(e))
+    output_file = os.path.join(IMAGES_FOLDER, plot_image_name)
 
-    if not is_image_cached(out_file):
+    if not is_image_cached(output_file):
 
         currencies = [parser_instance.get_currency(currency_name=currency,
                                                    date=d)
@@ -217,26 +222,33 @@ def show_currency_graph(bot, update, args):
         x = [d for d in dates]
         y_buy = [c.buy for c in currencies]
         y_sell = [c.sell for c in currencies]
-
-        # Extra setupto orrectly display dates on X-axis
-        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
-        plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-        plt.plot(x, y_buy, label='Buy')
-        plt.plot(x, y_sell, label='Sell')
-        plt.legend()
-        plt.gcf().autofmt_xdate()
-
-        try:
-            os.mkdir(IMAGES_FOLDER)
-        except OSError:
-            pass
-        plt.savefig(out_file)
-        plt.clf()
-        plt.cla()
+        render_exchange_rate_plot(x, y_buy, y_sell, output_file)
+        reset_plot(plt)
 
     bot.sendPhoto(chat_id=chat_id,
-                  photo=open(out_file, 'rb'))
+                  photo=open(output_file, 'rb'))
     return
+
+
+def reset_plot(plot):
+    """Resets all data on the given plot"""
+    plt.clf()
+    plt.cla()
+
+
+# TODO: This function should be less specific
+def render_exchange_rate_plot(x_axe, y_buy, y_sell, output_file):
+    """Renders plot to the given file"""
+    # Extra setupto orrectly display dates on X-axis
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+    plt.plot(x, y_buy, label='Buy')
+    plt.plot(x, y_sell, label='Sell')
+    plt.legend()
+    plt.gcf().autofmt_xdate()
+
+    plt.savefig(out_file)
+    return plt
 
 
 def generate_plot_name(bank_name, currency_name, start_date, end_date):
@@ -271,6 +283,7 @@ rate dynamincs for the specified period of time
 
 
 def is_image_cached(image_path, max_n=8):
+    """Checks whether image with the given name has already been created"""
     return os.path.exists(image_path)
 
 
