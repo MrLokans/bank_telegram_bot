@@ -18,6 +18,7 @@
 #  [*] Turn playbook into role
 #  [ ] Turn mongo installation into separate playbook
 #  [ ] Cache exchange requests
+#  [ ] Currently mongodb authentication DOES NOT WORK
 
 
 import os

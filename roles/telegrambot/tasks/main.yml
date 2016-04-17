@@ -1,5 +1,4 @@
 ---
-
   - name: Update the packages list (Debian)
     when: ansible_os_family == 'Debian'
     apt:
@@ -39,10 +38,11 @@
       - python34-Cython
       - python34-numpy
       - python-matplotlib
-      - python-scipy
+      - scipy
       - python-pandas
       - python-pymongo
-      - mongodb-org
+      - mongodb-server
+      - mongodb
 
   - name: Copy supervisord config file
     template:
@@ -94,8 +94,17 @@
       virtualenv="{{ project_virtualenv_folder }}"  
     notify: restart supervisord
 
+  - name: Run mongodb
+    service: name=mongod state=started enabled=yes
+
   - name: Set up mongoDB
-    mongodb_user: database={{ mongo_db }} name={{ mongo_user }} password={{ mongo_password }} state=present
+    mongodb_user: 
+      database="{{ mongo_db }}"
+      name="{{ mongo_user }}"
+      password="{{ mongo_password }}"
+      state=present 
+      roles=readWriteAnyDatabase
+    notify: restart mongodb
 
   - name: Ensure supervisord is running
     service:

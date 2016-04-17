@@ -28,6 +28,7 @@ class MongoCurrencyCache(object):
                                                serverSelectionTimeoutMS=self.server_delay)
             self._client.server_info()
             self._db = self._client[settings.MONGO_DATABASE]
+
             self._db.authenticate(settings.MONGO_USER,
                                   settings.MONGO_PASSWORD)
             self._collection = self._db[settings.MONGO_COLLECTION]

@@ -1,3 +1,6 @@
 ---
   - name: restart supervisord
     service: name=supervisord state=restarted
+
+  - name: restart mongodb
+    service: name=mongodb state=restarted
