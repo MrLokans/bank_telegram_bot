@@ -33,7 +33,7 @@ def debug_msg(msg):
     print("DEBUG: {}".format(msg))
 
 
-def date_diffs_for_long_diff(day_diff, min_n=8, max_n=10):
+def date_diffs_for_long_diff(day_diff, min_n=8, max_n=20):
     """
         Takes number of days and splits it into a list of diffs
     """
