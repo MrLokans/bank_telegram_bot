@@ -18,9 +18,5 @@
     - mongo_password: "{{ lookup('ini', 'mongo_password section=mongo file=credentials.ini') }}"
 
   roles:
-    # - { role: telegrambot,  project_repo: "{{ project_repo }}", 
-    #                         project_root_dir: "{{ project_root_dir }}", 
-    #                         project_virtualenv_folder: "{{ project_virtualenv_folder}}",
-    #                         bot_api_token: "{{ bot_api_token }}",
-    #                         bot_supervisor_owner: "{{ bot_supervisor_owner}}"}
+    - mongodb
     - telegrambot

@@ -16,8 +16,6 @@
       - libblas-dev 
       - liblapack-dev 
       - libatlas-base-dev
-      - mongodb-org
-      - python-pymongo
 
   - name: Update virtualenv version on RedHat
     pip: name=virtualenv state=latest
@@ -40,9 +38,6 @@
       - python-matplotlib
       - scipy
       - python-pandas
-      - python-pymongo
-      - mongodb-server
-      - mongodb
 
   - name: Copy supervisord config file
     template:
@@ -93,18 +88,6 @@
       requirements="{{ project_root_dir }}"bot/redhat_requirements.txt 
       virtualenv="{{ project_virtualenv_folder }}"  
     notify: restart supervisord
-
-  - name: Run mongodb
-    service: name=mongod state=started enabled=yes
-
-  - name: Set up mongoDB
-    mongodb_user: 
-      database="{{ mongo_db }}"
-      name="{{ mongo_user }}"
-      password="{{ mongo_password }}"
-      state=present 
-      roles=readWriteAnyDatabase
-    notify: restart mongodb
 
   - name: Ensure supervisord is running
     service:

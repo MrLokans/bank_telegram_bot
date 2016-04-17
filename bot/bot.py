@@ -16,9 +16,10 @@
 #  [ ] Rotate image cache to not overflow disk (say limit to 500 mb)
 #  [ ] On big date differences date on the plot are hardly distinctable
 #  [*] Turn playbook into role
-#  [ ] Turn mongo installation into separate playbook
+#  [*] Turn mongo installation into separate playbook
 #  [ ] Cache exchange requests
-#  [ ] Currently mongodb authentication DOES NOT WORK
+#  [ ] Setup mongodb config, create admin and normal user
+#  [ ] Create local vagrant deploy
 
 
 import os
