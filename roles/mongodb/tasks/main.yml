@@ -27,12 +27,12 @@
   - name: Ensure mongodb is running.
     service: name=mongod state=started enabled=yes
 
-  - name: Set up mongoDB
-    mongodb_user: 
-      database="{{ mongo_db }}"
-      name="{{ mongo_user }}"
-      password="{{ mongo_password }}"
-      state=present 
-      roles=readWriteAnyDatabase
-      login_database="{{ mongo_db }}"
-    notify: restart mongodb
+  # - name: Set up mongoDB
+  #   mongodb_user: 
+  #     database="{{ mongo_db }}"
+  #     name="{{ mongo_user }}"
+  #     password="{{ mongo_password }}"
+  #     state=present 
+  #     roles=readWriteAnyDatabase
+  #     login_database="{{ mongo_db }}"
+  #   notify: restart mongodb
