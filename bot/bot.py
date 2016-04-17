@@ -242,8 +242,8 @@ def render_exchange_rate_plot(x_axe, y_buy, y_sell, output_file):
     # Extra setupto orrectly display dates on X-axis
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
     plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-    plt.plot(x, y_buy, label='Buy')
-    plt.plot(x, y_sell, label='Sell')
+    plt.plot(x_axe, y_buy, label='Buy')
+    plt.plot(x_axe, y_sell, label='Sell')
     plt.legend()
     plt.gcf().autofmt_xdate()
 
