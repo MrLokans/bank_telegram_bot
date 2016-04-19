@@ -36,13 +36,18 @@ class MongoCurrencyCache(object):
         except pymongo.errors.ServerSelectionTimeoutError:
             self.is_storage_available = False
         except pymongo.errors.OperationFailure:
-            logging.error("Incorrect credentials supplied: {} - {}".format(settings.MONGO_USER,
-                                                                           settings.MONGO_PASSWORD))
+            err_msg = "Incorrect credentials supplied: {} - {}"
+            logging.error(err_msg.format(settings.MONGO_USER,
+                                         settings.MONGO_PASSWORD))
             self.is_storage_available = False
 
     def get_cached_value(self, bank_name, cur_name, date_str):
+        """Gets currency object from the cache.
+        If currency is not present - returns None"""
+
         if not self.is_storage_available:
-            logger.info("Currency requested from cache but cache is unavailable.")
+            msg = "Currency requested from cache but cache is unavailable."
+            logger.info(msg)
             return None
         search_key = "{}_{}_{}".format(bank_name.lower(),
                                        cur_name.lower(),
@@ -58,6 +63,7 @@ class MongoCurrencyCache(object):
 
     def cache_currency(self, bank_name, cur_instance,
                        date_str):
+        """Puts given currency into the cache"""
         dbg_msg = "Trying to cache currency {}-{}-{} in cache.".format(
             bank_name, cur_instance.sell, date_str
         )
@@ -93,7 +99,7 @@ class BelgazpromParser(object):
         self._cache = MongoCurrencyCache()
 
     # TODO: caching!
-    def __get_exchange_rate_for_the_date(self, d):
+    def __get_response_for_the_date(self, d):
         """Gets page with currency rates for the given date"""
 
         supplied_date = d
@@ -112,9 +118,15 @@ class BelgazpromParser(object):
         return BeautifulSoup(text, "html.parser")
 
     def __get_currency_table(self, soup):
+        """Returns table with exchanges rates from the given
+        BeautifulSoup object"""
         return soup.find(id="courses_tab1_form").parent
 
     def __get_currency_objects(self, cur_table, days_since_now=None):
+        """
+            Parses BeautifulSoup table with exchanges rates and extracts
+            currency data
+        """
         if not days_since_now:
             exchange_table = cur_table.find('table').find('tbody')
             exchange_rows = exchange_table.find_all('tr')
@@ -139,29 +151,18 @@ class BelgazpromParser(object):
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
 
-        r = self.__get_exchange_rate_for_the_date(date)
+        r = self.__get_response_for_the_date(date)
         s = self.__soup_from_request(r)
         currency_table = self.__get_currency_table(s)
         currencies = self.__get_currency_objects(currency_table)
+
+        str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
+        for currency in currencies:
+            self._cache.cache_currency(self.short_name,
+                                       currency,
+                                       str_date)
+
         return currencies
-
-    # def get_all_currencies(self, diff_days=None):
-    #     if diff_days is not None:
-    #         try:
-    #             diff_days = int(diff_days)
-    #         except ValueError:
-    #             diff_days = 0
-    #     else:
-    #         diff_days = 0
-
-    #     current_date = datetime.date.today()
-    #     former_date = current_date - datetime.timedelta(days=diff_days)
-
-    #     r = self.__get_exchange_rate_for_the_date(former_date)
-    #     s = self.__soup_from_request(r)
-    #     currency_table = self.__get_currency_table(s)
-    #     currencies = self.__get_currency_objects(currency_table)
-    #     return currencies
 
     def get_currency_for_diff_date(self, diff_days, currency="USD"):
         former_date = datetime.date.today - datetime.timedelta(days=diff_days)
