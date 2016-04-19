@@ -17,7 +17,7 @@
 #  [ ] On big date differences date on the plot are hardly distinctable
 #  [*] Turn playbook into role
 #  [*] Turn mongo installation into separate playbook
-#  [ ] Cache exchange requests
+#  [*] Cache exchange requests
 #  [ ] Setup mongodb config, create admin and normal user
 #  [ ] Create local vagrant deploy
 
@@ -36,19 +36,13 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 
-from bank_parsers import BelgazpromParser
+from parsers.belgazprombank import BelgazpromParser
 
 from utils import (
     get_date_arg, get_date_from_date_diff, str_from_date,
     date_diffs_for_long_diff
 )
-
-
-logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.INFO)
-
-logger = logging.getLogger(__name__)
+from settings import logger
 
 # add extra styling for our graphs
 sns.set_style("darkgrid")

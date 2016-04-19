@@ -1,8 +1,10 @@
-import os
+# coding: utf-8
 
-MONGO_HOST = os.environ.get('TELEGRAM_MONGODB_HOST')
-MONGO_PORT = int(os.environ.get('TELEGRAM_MONGODB_PORT', 27017))
-MONGO_DATABASE = os.environ.get('TELEGRAM_MONGODB_DB')
-MONGO_COLLECTION = os.environ.get('TELEGRAM_MONGODB_COLLECTION')
-MONGO_USER = os.environ.get('TELEGRAM_MONGODB_USER')
-MONGO_PASSWORD = os.environ.get('TELEGRAM_MONGODB_PASSWORD')
+import logging
+
+LOGGER_NAME = "bankparser"
+
+logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=logging.INFO)
+logger = logging.getLogger(LOGGER_NAME)

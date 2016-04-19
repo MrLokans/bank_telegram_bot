@@ -25,6 +25,8 @@ def get_date_from_date_diff(day_difference):
     return now - datetime.timedelta(days=int(day_difference))
 
 
+# coding: utf-8
+
 def str_from_date(date):
     return date.strftime("%d.%m.%Y")
 
