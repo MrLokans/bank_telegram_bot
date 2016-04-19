@@ -5,11 +5,10 @@
       update_cache: yes
       cache_valid_time: 3600
 
-  - name: (Debian) Install Supervisord,GCC fortran compliler and extra libraries
+  - name: (Debian) Install GCC fortran compliler and extra libraries
     when: ansible_os_family == 'Debian'
     apt: name={{ item }} state=present
     with_items: 
-      - supervisor
       - gfortran
       - libfreetype6-dev
       - libxft-dev
@@ -21,13 +20,12 @@
     pip: name=virtualenv state=latest
     when: ansible_os_family == 'RedHat'
 
-  - name: (RedHat) Install Supervisord,GCC fortran compliler and extra libraries
+  - name: (RedHat) Install GCC fortran compliler and extra libraries
     when: ansible_os_family == 'RedHat'
     yum: name={{ item }} state=latest update_cache=yes
     ignore_errors: True
 
     with_items: 
-      - supervisor
       - gcc-gfortran
       - python34
       - freetype-devel
@@ -39,10 +37,6 @@
       - scipy
       - python-pandas
 
-  - name: Copy supervisord config file
-    template:
-      src: templates/supervisord.conf
-      dest: /etc/supervisord.conf
 
   - name: Copy supervisord telegram config file
     template:
@@ -88,10 +82,3 @@
       requirements="{{ project_root_dir }}"bot/redhat_requirements.txt 
       virtualenv="{{ project_virtualenv_folder }}"  
     notify: restart supervisord
-
-  - name: Ensure supervisord is running
-    service:
-      name: supervisord
-      state: running
-      enabled: yes
-

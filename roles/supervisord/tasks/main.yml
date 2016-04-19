@@ -1,0 +1,27 @@
+---
+
+  - name: (Debian) Install Supervisord
+    when: ansible_os_family == 'Debian'
+    apt: name={{ item }} state=present
+    with_items: 
+      - supervisor
+
+  - name: (RedHat) Install Supervisord
+    when: ansible_os_family == 'RedHat'
+    yum: name={{ item }} state=latest update_cache=yes
+    ignore_errors: True
+
+    with_items: 
+      - supervisor
+
+  - name: Copy supervisord config file
+    template:
+      src: templates/supervisord.conf
+      dest: /etc/supervisord.conf
+
+  - name: Ensure supervisord is running
+    service:
+      name: supervisord
+      state: running
+      enabled: yes
+
