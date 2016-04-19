@@ -4,7 +4,7 @@ import logging
 
 import pymongo
 
-import mongo_settings as settings
+import cache.mongo_settings as settings
 
 
 class MongoCurrencyCache(object):
