@@ -4,6 +4,12 @@
       update_cache: yes
       cache_valid_time: 3600
 
+  - name: (RedHat) Add mongodb repository
+    sudo: yes
+    template: src=rhel_mongodb.repo dest=/etc/yum.repos.d/mongodb-org-3.0.repo
+    when: ansible_os_family == 'RedHat'
+    with_items:  array
+
 
   - name: (Debian) Install mongodb and python library
     when: ansible_os_family == 'Debian'
