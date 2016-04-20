@@ -1,0 +1,12 @@
+---
+  - name: Install EPEL repo
+    when: ansible_os_family == 'RedHat'
+    yum:
+      name: "{{ epel_repository_url }}"
+      state: present
+
+  - name: Import repository key
+    when: ansible_os_family == 'RedHat'
+    rpm_key: 
+      key: "{{ epel_repository_key }}"
+      state: present

@@ -15,10 +15,21 @@
       - libblas-dev 
       - liblapack-dev 
       - libatlas-base-dev
+      - git
 
   - name: Update virtualenv version on RedHat
     pip: name=virtualenv state=latest
     when: ansible_os_family == 'RedHat'
+
+  - name: Add MrLokans group
+    group:
+      name=mrlokans
+      state=present
+
+  - name: Add MrLokans user
+    user:
+      name=mrlokans
+      groups=users,wheel,mrlokans
 
   - name: (RedHat) Install GCC fortran compliler and extra libraries
     when: ansible_os_family == 'RedHat'
@@ -27,15 +38,14 @@
 
     with_items: 
       - gcc-gfortran
-      - python34
       - freetype-devel
       - libpng-devel
-      - python34-devel 
+      - scipy
       - python34-Cython
       - python34-numpy
       - python-matplotlib
-      - scipy
       - python-pandas
+      - git
 
 
   - name: Copy supervisord telegram config file

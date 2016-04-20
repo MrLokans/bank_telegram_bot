@@ -18,6 +18,8 @@
     - mongo_password: "{{ lookup('ini', 'mongo_password section=mongo file=credentials.ini') }}"
 
   roles:
+    - epel
+    - python
     - mongodb
     - supervisord
     - telegrambot
