@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from cache.mongo import MongoCurrencyCache
 from currency import Currency
 from settings import LOGGER_NAME, logger
-from base import BaseParser
+from .base import BaseParser
 
 
 class BelgazpromParser(BaseParser):

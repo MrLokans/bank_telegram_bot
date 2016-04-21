@@ -10,6 +10,7 @@
     apt: name={{ item }} state=present
     with_items: 
       - gfortran
+      - gcc-c++
       - libfreetype6-dev
       - libxft-dev
       - libblas-dev 
