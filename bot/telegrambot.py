@@ -255,6 +255,7 @@ def help_user(bot, update, args):
 given currency or for all available currencies.
 /graph -d <days ago> -c <currency name> - plot currency exchange
 rate dynamincs for the specified period of time
+/banks - list names of currently supported banks.
 """
     bot.sendMessage(chat_id=chat_id,
                     text=help_message)
