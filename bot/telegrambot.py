@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 
-from parsers.belgazprombank_parser import BelgazpromParser
-
 from utils import (
     get_date_arg, get_date_from_date_diff, str_from_date,
     date_diffs_for_long_diff
@@ -66,25 +64,9 @@ def detect_parser_class_in_module(mdl):
 
 
 def get_parser(parser_name):
-
-    if cache.get(parser_name, ''):
-        parser_dict = cache.get(parser_name)
-        cached_at = parser_dict['cached_at']
-        now = datetime.datetime.now()
-        is_valid = (now - cached_at).seconds / 60 < CACHE_EXPIRACY_MINUTES
-        cached_parser = parser_dict.get('parser', None)
-        if is_valid and cached_parser:
-            logging.info("Using cached parser.")
-            return cached_parser
-
-    for parser in parsers:
-        if parser.short_name == parser_name:
-            selected_parser = parser
-            logging.info("Parser found. Caching.")
-            cache[parser_name] = {'cached_at': datetime.datetime.now(),
-                                  'parser': selected_parser}
-            return selected_parser
-    raise ValueError("Incorrect parser name: {}".format(parser_name))
+    """TODO: implement!"""
+    parser_classes = get_parser_classes()
+    return parser_classes[0]
 
 
 def start(bot, update):
@@ -106,8 +88,9 @@ def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
 
     # By default show data for the current day
+
     if not args:
-        parser = get_parser(default_parser.short_name)
+        parser = get_parser("")
         parser_instance = parser()
         all_currencies = parser_instance.get_all_currencies()
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
@@ -119,7 +102,7 @@ def course(bot, update, args, **kwargs):
                         text="Currencies: \n{}".format(currencies_text_value))
         return
     if len(args) >= 1:
-        parser = get_parser(default_parser.short_name)
+        parser = get_parser("")
 
         days_diff = get_date_arg(args)
 
@@ -168,7 +151,7 @@ def show_currency_graph(bot, update, args):
     days_diff = 10
     currency = "USD"
 
-    parser = get_parser(default_parser.short_name)
+    parser = get_parser("")
     parser_instance = parser()
 
     for i, arg in enumerate(args):
@@ -198,7 +181,8 @@ def show_currency_graph(bot, update, args):
 
     dates = [get_date_from_date_diff(d) for d in date_diffs]
     past_date, future_date = dates[0], dates[-1]
-    plot_image_name = generate_plot_name(default_parser.short_name, currency,
+    # TODO: choose bank name dynamically
+    plot_image_name = generate_plot_name("bgp", currency,
                                          past_date, future_date)
 
     if not os.path.exists(IMAGES_FOLDER):
@@ -278,6 +262,21 @@ rate dynamincs for the specified period of time
     return
 
 
+def list_banks(bot, update, args):
+    """Show user names of banks that are supported"""
+    chat_id = update.message.chat_id
+    parser_classes = get_parser_classes()
+
+    bank_names = "\n".join(
+        parser_cls.name for parser_cls in parser_classes
+    )
+
+    msg = "Current banks are now supported: \n {}".format(bank_names)
+    bot.sendMessage(chat_id=chat_id,
+                    text=msg)
+    return
+
+
 def is_image_cached(image_path, max_n=8):
     """Checks whether image with the given name has already been created"""
     return os.path.exists(image_path)
@@ -289,20 +288,11 @@ def main():
 
     dispatcher = updater.dispatcher
 
-    global parsers
-    parsers = [BelgazpromParser]
-
-    global default_parser
-    default_parser = BelgazpromParser
-
-    # We initialise cache for different parsers
-    global cache
-    cache = {p.short_name: {} for p in parsers}
-
     dispatcher.addTelegramCommandHandler('start', start)
     dispatcher.addTelegramCommandHandler('help', help_user)
     dispatcher.addTelegramCommandHandler('course', course)
     dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
+    dispatcher.addTelegramCommandHandler('banks', list_banks)
 
     dispatcher.addUnknownTelegramCommandHandler(unknown)
     # log all errors
