@@ -1,8 +1,9 @@
 # coding: utf-8
 
 import os
+import glob
 import datetime
-
+import importlib
 
 import logging
 
@@ -14,7 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import seaborn as sns
 
-from parsers.belgazprombank import BelgazpromParser
+from parsers.belgazprombank_parser import BelgazpromParser
 
 from utils import (
     get_date_arg, get_date_from_date_diff, str_from_date,
@@ -39,6 +40,29 @@ api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
     raise ValueError("No API token specified.")
+
+
+def get_parser_classes():
+    """Scans for classes that provide bank scraping and returns them as a list"""
+    # This implementation is naive, rethink!
+    parser_classes = []
+    parser_files = glob.glob("parsers/*_parser.py")
+    module_names = [os.path.basename(os.path.splitext(p)[0])
+                    for p in parser_files]
+    for module_name in module_names:
+        module = importlib.import_module(".".join(["parsers", module_name]))
+        parser_class = detect_parser_class_in_module(module)
+        if parser_class is not None:
+            parser_classes.append(parser_class)
+    return parser_classes
+
+
+def detect_parser_class_in_module(mdl):
+    """Inspects module for having a ...Parser class"""
+    for k in mdl.__dict__:
+        if isinstance(k, str) and k.endswith("Parser"):
+            return mdl.__dict__[k]
+    return None
 
 
 def get_parser(parser_name):
@@ -260,6 +284,7 @@ def is_image_cached(image_path, max_n=8):
 
 
 def main():
+    parser_classes = get_parser_classes()
     updater = Updater(token=api_token)
 
     dispatcher = updater.dispatcher
