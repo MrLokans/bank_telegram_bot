@@ -84,10 +84,13 @@ class BelgazpromParser(BaseParser):
         currencies = self.__get_currency_objects(currency_table)
 
         str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
-        for currency in currencies:
-            self._cache.cache_currency(self.short_name,
-                                       currency,
-                                       str_date)
+
+        is_today = date == datetime.date.today()
+        if not is_today:
+            for currency in currencies:
+                self._cache.cache_currency(self.short_name,
+                                           currency,
+                                           str_date)
 
         return currencies
 
@@ -101,10 +104,15 @@ class BelgazpromParser(BaseParser):
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
 
+        is_today = date == datetime.date.today()
+
         str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
-        cached_item = self._cache.get_cached_value(self.short_name,
-                                                   currency_name,
-                                                   str_date)
+
+        cached_item = None
+        if not is_today:
+            cached_item = self._cache.get_cached_value(self.short_name,
+                                                       currency_name,
+                                                       str_date)
         if cached_item:
             logger.info("Cached value found {}, returning".format(cached_item))
             return cached_item
@@ -113,7 +121,8 @@ class BelgazpromParser(BaseParser):
 
         for cur in currencies:
             if currency_name.upper() == cur.iso:
-                self._cache.cache_currency(self.short_name, cur, str_date)
+                if not is_today:
+                    self._cache.cache_currency(self.short_name, cur, str_date)
                 return cur
         else:
             return Currency('NoValue', '', '', '')
