@@ -28,11 +28,7 @@ sns.set_style("darkgrid")
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
-
-cache = {}
-parsers = []
-default_parser = None
-
+DEFAULT_PARSER_NAME = "bgp"
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
@@ -41,7 +37,9 @@ if not api_token:
 
 
 def get_parser_classes():
-    """Scans for classes that provide bank scraping and returns them as a list"""
+    """
+        Scans for classes that provide bank scraping and returns them as a list
+    """
     # This implementation is naive, rethink!
     parser_classes = []
     parser_files = glob.glob("parsers/*_parser.py")
@@ -64,9 +62,18 @@ def detect_parser_class_in_module(mdl):
 
 
 def get_parser(parser_name):
-    """TODO: implement!"""
+    """Gets parser by its name or short name."""
+    parser = None
     parser_classes = get_parser_classes()
-    return parser_classes[0]
+    for parser_class in parser_classes:
+        names_equal = parser_class.name.lower() == parser_name.lower()
+        short_names_equal = parser_class.short_name == parser_name.lower
+        if names_equal or short_names_equal:
+            parser = parser_class
+            break
+    else:
+        parser = parser_classes[0]
+    return parser
 
 
 def start(bot, update):
@@ -90,7 +97,7 @@ def course(bot, update, args, **kwargs):
     # By default show data for the current day
 
     if not args:
-        parser = get_parser("")
+        parser = get_parser("bgpbgp")
         parser_instance = parser()
         all_currencies = parser_instance.get_all_currencies()
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
@@ -102,7 +109,7 @@ def course(bot, update, args, **kwargs):
                         text="Currencies: \n{}".format(currencies_text_value))
         return
     if len(args) >= 1:
-        parser = get_parser("")
+        parser = get_parser("bgp")
 
         days_diff = get_date_arg(args)
 
@@ -151,7 +158,7 @@ def show_currency_graph(bot, update, args):
     days_diff = 10
     currency = "USD"
 
-    parser = get_parser("")
+    parser = get_parser("bgp")
     parser_instance = parser()
 
     for i, arg in enumerate(args):
@@ -159,30 +166,39 @@ def show_currency_graph(bot, update, args):
             if i < len(args) - 1:
                 # Handle non-int input
                 try:
-                    days_diff = int(args[i+1])
+                    days_diff = int(args[i + 1])
                 except ValueError:
+                    msg = """\
+Wrong day diff format, please specifiy integerr number in range 2-2400
+"""
                     bot.sendMessage(chat_id=chat_id,
-                                    text="Wrong day diff format, please specifiy integerr number in range 2-2400")
+                                    text=msg)
                     return
                 if days_diff < 2 or days_diff > 2400:
+                    msg = """\
+Wrong day diff format, please specifiy integerr number in range 2-2400
+"""
                     bot.sendMessage(chat_id=chat_id,
-                                    text="Wrong day diff format, please specifiy integerr number in range 2-2400")
+                                    text=msg)
                     return
         if arg == "-c":
             if i < len(args) - 1:
                 # Validate currency
-                currency = args[i+1]
+                currency = args[i + 1]
                 if currency not in parser.allowed_currencies:
+                    msg = """\
+Invalid currency, valid options are: [{}]
+""".format(", ".join(parser.allowed_currencies))
                     bot.sendMessage(chat_id=chat_id,
-                                    text="Invalid currency, valid options are: [{}]".format(", ".join(parser.allowed_currencies)))
+                                    text=msg)
                     return
 
     date_diffs = date_diffs_for_long_diff(days_diff)
 
     dates = [get_date_from_date_diff(d) for d in date_diffs]
     past_date, future_date = dates[0], dates[-1]
-    # TODO: choose bank name dynamically
-    plot_image_name = generate_plot_name("bgp", currency,
+
+    plot_image_name = generate_plot_name(parser.short_name, currency,
                                          past_date, future_date)
 
     if not os.path.exists(IMAGES_FOLDER):
@@ -284,7 +300,6 @@ def is_image_cached(image_path, max_n=8):
 
 
 def main():
-    parser_classes = get_parser_classes()
     updater = Updater(token=api_token)
 
     dispatcher = updater.dispatcher
