@@ -1,3 +1,4 @@
+cython
 pymongo==3.2.2
 beautifulsoup4==4.4.1
 cycler==0.10.0

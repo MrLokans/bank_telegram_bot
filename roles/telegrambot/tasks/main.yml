@@ -79,17 +79,25 @@
       state: directory
   - name: Create python's virtual environment
     command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }}
+    become: yes
+    become_user: mrlokans
 
   - name: Install bot's dependencies (Debian)
     when: ansible_os_family == 'Debian'
     pip:
       requirements="{{ project_root_dir }}"bot/requirements.txt 
-      virtualenv="{{ project_virtualenv_folder }}"  
+      virtualenv="{{ project_virtualenv_folder }}"
+      extra_args="--no-cache-dir --isolated -vv --disable-pip-version-check"
+    become: yes
+    become_user: mrlokans
     notify: restart supervisord
 
   - name: Install bot's dependencies (RedHat)
     when: ansible_os_family == 'RedHat'
     pip:
-      requirements="{{ project_root_dir }}"bot/redhat_requirements.txt 
-      virtualenv="{{ project_virtualenv_folder }}"  
+      requirements="{{ project_root_dir }}"bot/redhat_requirements.txt
+      virtualenv="{{ project_virtualenv_folder }}"
+      extra_args="--no-cache-dir --isolated -vv --disable-pip-version-check"
+    become: yes
+    become_user: mrlokans
     notify: restart supervisord
