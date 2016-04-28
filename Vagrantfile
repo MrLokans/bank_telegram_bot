@@ -5,9 +5,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.customize ["modifyvm", :id, "--memory", "512"]
     end
     
-  config.vm.define "mrlokans" do |app|
+  config.vm.define "telegrambot-centos" do |app|
     app.vm.hostname = "telegrambot.dev"
     app.vm.box = "centos/7"
     app.vm.network :private_network, ip: "192.168.120.120"
+  end
+
+  config.vm.define "telegrambot-debian" do |app|
+    app.vm.hostname = "telegrambot.dev"
+    app.vm.box = "debian/jessie64"
+    app.vm.network :private_network, ip: "192.168.120.121"
   end
 end
