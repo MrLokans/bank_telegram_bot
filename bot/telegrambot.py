@@ -29,6 +29,8 @@ API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
 DEFAULT_PARSER_NAME = "bgp"
+PARSERS_DIR = "parsers"
+DEFAULT_PARSER_MODULE = "belgazprombank_parser"
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
@@ -40,24 +42,32 @@ def get_parser_classes():
     """
         Scans for classes that provide bank scraping and returns them as a list
     """
-    # This implementation is naive, rethink!
     parser_classes = []
     parser_files = glob.glob("parsers/*_parser.py")
     module_names = [os.path.basename(os.path.splitext(p)[0])
                     for p in parser_files]
     for module_name in module_names:
         module = importlib.import_module(".".join(["parsers", module_name]))
-        parser_class = detect_parser_class_in_module(module)
+        parser_class = parser_class_from_module(module)
         if parser_class is not None:
             parser_classes.append(parser_class)
+
+    # We didn't find any extra class (techncally, currently it is not possible,
+    # but who cares?) so we return default one
+    if len(parser_classes) == 0:
+        parser_path = ".".join(["parsers", DEFAULT_PARSER_MODULE])
+        default_module = importlib.import_module(parser_path)
+        default_class = parser_class_from_module(default_module)
+        parser_classes = [default_class]
+
     return parser_classes
 
 
-def detect_parser_class_in_module(mdl):
-    """Inspects module for having a ...Parser class"""
-    for k in mdl.__dict__:
+def parser_class_from_module(module):
+    """Inspects module for having a *Parser class"""
+    for k in module.__dict__:
         if isinstance(k, str) and k.endswith("Parser"):
-            return mdl.__dict__[k]
+            return module.__dict__[k]
     return None
 
 
