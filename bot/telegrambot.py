@@ -65,6 +65,7 @@ def get_parser(parser_name):
     """Gets parser by its name or short name."""
     parser = None
     parser_classes = get_parser_classes()
+    assert len(parser_classes) > 0
     for parser_class in parser_classes:
         names_equal = parser_class.name.lower() == parser_name.lower()
         short_names_equal = parser_class.short_name == parser_name.lower
@@ -97,7 +98,7 @@ def course(bot, update, args, **kwargs):
     # By default show data for the current day
 
     if not args:
-        parser = get_parser("bgpbgp")
+        parser = get_parser("bgp")
         parser_instance = parser()
         all_currencies = parser_instance.get_all_currencies()
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
