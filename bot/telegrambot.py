@@ -47,6 +47,7 @@ def parse_args(bot, update, args):
         logger.exception(str(e))
         bot.sendMessage(chat_id=update.message.chat_id,
                         text=str(e))
+        return
 
     return preferences
 
@@ -56,6 +57,8 @@ def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
 
     preferences = parse_args(bot, update, args)
+    if not preferences:
+        return
 
     days_diff = preferences['days_ago']
 
@@ -105,6 +108,8 @@ def show_currency_graph(bot, update, args):
     parser_instance = parser()
 
     preferences = parse_args(bot, update, args)
+    if not preferences:
+        return
 
     days_diff = preferences['days_ago']
     currency = preferences['currency']
