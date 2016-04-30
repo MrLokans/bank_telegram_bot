@@ -4,9 +4,67 @@
 
 
 import re
+import os
+import glob
 import datetime
+import importlib
+
+import settings
+
+from bot_exceptions import BotArgumentParsingError
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
+
+
+def preferences_from_args(args):
+    """Takes a sequence of strings and tries to find settings, returning default
+    values if not found:
+    There are args that may be required for any request:
+    -b <bank_name> - selects a bank by iths short name
+    -c <currency_name> - selects currency to get exchange rates for
+    -d <date_diff> - parse data for the moment in the past
+
+    In a long run we should be able to support a list of currencies supplied,
+    and a recognition of parameters w/o those unfriendly CLI keys like -d or -c
+    """
+    preferences = {
+        "days_ago": 0,
+        "currency": "all",  # We want to get data about all present currencies
+        "bank_name": settings.DEFAULT_PARSER_NAME
+    }
+
+    for i, arg in enumerate(args):
+        if arg == "-d":
+            if i < len(args) - 1:
+                # Handle non-int input
+                try:
+                    days_diff = int(args[i + 1])
+                except ValueError:
+                    msg = """\
+Wrong day diff format, please specifiy integer number in range 2-2400
+"""
+                    raise BotArgumentParsingError(msg)
+
+                if days_diff < 2 or days_diff > 2400:
+                    msg = """\
+Wrong day diff format, please specifiy integerr number in range 2-2400
+"""
+                    raise BotArgumentParsingError(msg)
+                preferences['days_ago'] = days_diff
+        if arg == "-c":
+            if i < len(args) - 1:
+                # Validate currency
+                currency = args[i + 1]
+                preferences['currency'] = get_currency_from_arg(currency)
+    return preferences
+
+
+def get_currency_from_arg(s):
+    """Parse argument string and extracts currency from it
+    Logics moved into separate method to provide ability to parse
+    multpile currency names
+    """
+    return s
 
 
 def get_date_arg(args):
@@ -41,9 +99,9 @@ def date_diffs_for_long_diff(day_diff, min_n=8, max_n=20):
     """
 
     if 1 <= day_diff <= max_n:
-        return [i for i in range(day_diff+1)]
+        return [i for i in range(day_diff + 1)]
     else:
-        for i in range(min_n, max_n+1):
+        for i in range(min_n, max_n + 1):
             if day_diff % i == 0:
                 den = day_diff // i
                 return [x * den for x in range(0, i + 1)]
@@ -52,3 +110,52 @@ def date_diffs_for_long_diff(day_diff, min_n=8, max_n=20):
         result = [x * portion for x in range(0, max_n - 1)]
         result.append(rest + result[-1])
         return result
+
+
+def get_parser_classes():
+    """
+        Scans for classes that provide bank scraping and returns them as a list
+    """
+    parser_classes = []
+    parser_files = glob.glob("parsers/*_parser.py")
+    module_names = [os.path.basename(os.path.splitext(p)[0])
+                    for p in parser_files]
+    for module_name in module_names:
+        module = importlib.import_module(".".join(["parsers", module_name]))
+        parser_class = parser_class_from_module(module)
+        if parser_class is not None:
+            parser_classes.append(parser_class)
+
+    # We didn't find any extra class (techncally, currently it is not possible,
+    # but who cares?) so we return default one
+    if len(parser_classes) == 0:
+        parser_path = ".".join(["parsers", settings.DEFAULT_PARSER_MODULE])
+        default_module = importlib.import_module(parser_path)
+        default_class = parser_class_from_module(default_module)
+        parser_classes = [default_class]
+
+    return parser_classes
+
+
+def parser_class_from_module(module):
+    """Inspects module for having a *Parser class"""
+    for k in module.__dict__:
+        if isinstance(k, str) and k.endswith("Parser"):
+            return module.__dict__[k]
+    return None
+
+
+def get_parser(parser_name):
+    """Gets parser by its name or short name."""
+    parser = None
+    parser_classes = get_parser_classes()
+    assert len(parser_classes) > 0
+    for parser_class in parser_classes:
+        names_equal = parser_class.name.lower() == parser_name.lower()
+        short_names_equal = parser_class.short_name == parser_name.lower
+        if names_equal or short_names_equal:
+            parser = parser_class
+            break
+    else:
+        parser = parser_classes[0]
+    return parser

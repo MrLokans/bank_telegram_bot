@@ -1,0 +1,2 @@
+class BotArgumentParsingError(Exception):
+    pass

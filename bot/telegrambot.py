@@ -1,9 +1,6 @@
 # coding: utf-8
 
 import os
-import glob
-import datetime
-import importlib
 
 import logging
 
@@ -11,80 +8,22 @@ import telegram
 from telegram import Updater
 from telegram.ext.dispatcher import run_async
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import seaborn as sns
 
-from utils import (
-    get_date_arg, get_date_from_date_diff, str_from_date,
-    date_diffs_for_long_diff
-)
+from bot_exceptions import BotArgumentParsingError
+import plotting
+import utils
 from settings import logger
-
-# add extra styling for our graphs
-sns.set_style("darkgrid")
 
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
-DEFAULT_PARSER_NAME = "bgp"
-PARSERS_DIR = "parsers"
-DEFAULT_PARSER_MODULE = "belgazprombank_parser"
+
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
     raise ValueError("No API token specified.")
-
-
-def get_parser_classes():
-    """
-        Scans for classes that provide bank scraping and returns them as a list
-    """
-    parser_classes = []
-    parser_files = glob.glob("parsers/*_parser.py")
-    module_names = [os.path.basename(os.path.splitext(p)[0])
-                    for p in parser_files]
-    for module_name in module_names:
-        module = importlib.import_module(".".join(["parsers", module_name]))
-        parser_class = parser_class_from_module(module)
-        if parser_class is not None:
-            parser_classes.append(parser_class)
-
-    # We didn't find any extra class (techncally, currently it is not possible,
-    # but who cares?) so we return default one
-    if len(parser_classes) == 0:
-        parser_path = ".".join(["parsers", DEFAULT_PARSER_MODULE])
-        default_module = importlib.import_module(parser_path)
-        default_class = parser_class_from_module(default_module)
-        parser_classes = [default_class]
-
-    return parser_classes
-
-
-def parser_class_from_module(module):
-    """Inspects module for having a *Parser class"""
-    for k in module.__dict__:
-        if isinstance(k, str) and k.endswith("Parser"):
-            return module.__dict__[k]
-    return None
-
-
-def get_parser(parser_name):
-    """Gets parser by its name or short name."""
-    parser = None
-    parser_classes = get_parser_classes()
-    assert len(parser_classes) > 0
-    for parser_class in parser_classes:
-        names_equal = parser_class.name.lower() == parser_name.lower()
-        short_names_equal = parser_class.short_name == parser_name.lower
-        if names_equal or short_names_equal:
-            parser = parser_class
-            break
-    else:
-        parser = parser_classes[0]
-    return parser
 
 
 def start(bot, update):
@@ -105,50 +44,46 @@ def error(bot, update, error):
 def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
 
-    # By default show data for the current day
+    try:
+        preferences = utils.preferences_from_args(args)
+    except BotArgumentParsingError as e:
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text=str(e))
 
-    if not args:
-        parser = get_parser("bgp")
-        parser_instance = parser()
-        all_currencies = parser_instance.get_all_currencies()
+    days_diff = preferences['days_ago']
+
+    parser = utils.get_parser("bgp")
+    parser_instance = parser()
+
+    parse_date = utils.get_date_from_date_diff(days_diff)
+    logger.info("Requesting course for {}".format(str(parse_date)))
+
+    if preferences['currency'] == 'all':
+        all_currencies = parser_instance.get_all_currencies(date=parse_date)
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
                             for x in all_currencies]
-
         currencies_text_value = "\n".join(displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
                         text="Currencies: \n{}".format(currencies_text_value))
+
         return
-    if len(args) >= 1:
-        parser = get_parser("bgp")
 
-        days_diff = get_date_arg(args)
+    currency = preferences['currency']
+    if currency.upper() in parser.allowed_currencies:
+        # TODO: unify passing currency names (lowercase or uppercase only)
+        cur = parser_instance.get_currency(currency_name=currency,
+                                           date=parse_date)
 
-        old_date = get_date_from_date_diff(days_diff)
-        parser_instance = parser()
-
-        if args[0].upper() in parser.allowed_currencies:
-            cur = parser_instance.get_currency(currency_name=args[0],
-                                               date=old_date)
-
-            if cur.name == 'NoValue':
-                bot.sendMessage(chat_id=chat_id,
-                                text="Unknown currency: {}".format(args[0]))
-                return
-            else:
-                text = "{}: {} {}".format(cur.iso, cur.sell, cur.buy)
-                bot.sendMessage(chat_id=chat_id,
-                                text=text)
-                return
-        all_currencies = parser_instance.get_all_currencies()
-        displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
-                            for x in all_currencies]
-
-        currencies_text_value = "\n".join(displayed_values)
-        bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
-        bot.sendMessage(chat_id=chat_id,
-                        text="Currencies: \n{}".format(currencies_text_value))
-        return
+        if cur.name == 'NoValue':
+            bot.sendMessage(chat_id=chat_id,
+                            text="Unknown currency: {}".format(args[0]))
+            return
+        else:
+            text = "{}: {} {}".format(cur.iso, cur.sell, cur.buy)
+            bot.sendMessage(chat_id=chat_id,
+                            text=text)
+            return
 
 
 def show_currency_graph(bot, update, args):
@@ -169,7 +104,7 @@ def show_currency_graph(bot, update, args):
     days_diff = 10
     currency = "USD"
 
-    parser = get_parser("bgp")
+    parser = utils.get_parser("bgp")
     parser_instance = parser()
 
     for i, arg in enumerate(args):
@@ -180,7 +115,7 @@ def show_currency_graph(bot, update, args):
                     days_diff = int(args[i + 1])
                 except ValueError:
                     msg = """\
-Wrong day diff format, please specifiy integerr number in range 2-2400
+Wrong day diff format, please specifiy integer number in range 2-2400
 """
                     bot.sendMessage(chat_id=chat_id,
                                     text=msg)
@@ -204,13 +139,13 @@ Invalid currency, valid options are: [{}]
                                     text=msg)
                     return
 
-    date_diffs = date_diffs_for_long_diff(days_diff)
+    date_diffs = utils.date_diffs_for_long_diff(days_diff)
 
-    dates = [get_date_from_date_diff(d) for d in date_diffs]
+    dates = [utils.get_date_from_date_diff(d) for d in date_diffs]
     past_date, future_date = dates[0], dates[-1]
 
-    plot_image_name = generate_plot_name(parser.short_name, currency,
-                                         past_date, future_date)
+    plot_image_name = plotting.generate_plot_name(parser.short_name, currency,
+                                                  past_date, future_date)
 
     if not os.path.exists(IMAGES_FOLDER):
         try:
@@ -229,50 +164,12 @@ Invalid currency, valid options are: [{}]
         x = [d for d in dates]
         y_buy = [c.buy for c in currencies]
         y_sell = [c.sell for c in currencies]
-        render_exchange_rate_plot(x, y_buy, y_sell, output_file)
-        reset_plot(plt)
+        plotting.render_exchange_rate_plot(x, y_buy, y_sell, output_file)
+        plotting.reset_plot()
 
     bot.sendPhoto(chat_id=chat_id,
                   photo=open(output_file, 'rb'))
     return
-
-
-def reset_plot(plot):
-    """Resets all data on the given plot"""
-    plt.clf()
-    plt.cla()
-
-
-# TODO: This function should be less specific
-def render_exchange_rate_plot(x_axe, y_buy, y_sell, output_file):
-    """Renders plot to the given file"""
-    # Extra setupto orrectly display dates on X-axis
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
-    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
-    plt.plot(x_axe, y_buy, label='Buy')
-    plt.plot(x_axe, y_sell, label='Sell')
-    plt.legend()
-    plt.gcf().autofmt_xdate()
-
-    plt.savefig(output_file)
-    return plt
-
-
-def generate_plot_name(bank_name, currency_name, start_date, end_date):
-    if isinstance(start_date, datetime.date) or\
-       isinstance(start_date, datetime.datetime):
-        start_date = start_date.strftime("%d-%m-%Y")
-
-    if isinstance(end_date, datetime.date) or\
-       isinstance(end_date, datetime.datetime):
-        end_date = end_date.strftime("%d-%m-%Y")
-
-    name = "{}_{}_{}_{}.png".format(bank_name,
-                                    currency_name,
-                                    end_date,
-                                    start_date)
-
-    return name
 
 
 def help_user(bot, update, args):
