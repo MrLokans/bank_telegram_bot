@@ -12,7 +12,7 @@ from telegram.ext.dispatcher import run_async
 from bot_exceptions import BotArgumentParsingError
 import plotting
 import utils
-from settings import logger
+from settings import logger, DEFAULT_CURRENCY
 
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
@@ -40,15 +40,22 @@ def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
 
+def parse_args(bot, update, args):
+    try:
+        preferences = utils.preferences_from_args(args)
+    except BotArgumentParsingError as e:
+        logger.exception(str(e))
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text=str(e))
+
+    return preferences
+
+
 @run_async
 def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
 
-    try:
-        preferences = utils.preferences_from_args(args)
-    except BotArgumentParsingError as e:
-        bot.sendMessage(chat_id=update.message.chat_id,
-                        text=str(e))
+    preferences = parse_args(bot, update, args)
 
     days_diff = preferences['days_ago']
 
@@ -90,54 +97,20 @@ def show_currency_graph(bot, update, args):
     """Sends user currency graph changes for the specified period of time.
     E.g. user wants to get exchange rates for the US currency for 10 last days,
     he needs to send something like '/graph USD -d 10' """
+
     chat_id = update.message.chat_id
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
-
-    # TODO: find out what data are we looking for:
-    # sell or buy rates or display both
-
-    # if len(args) == 0:
-    #     bot.sendMessage(chat_id=chat_id,
-    #                     text="Incorrect parameters")
-    #     return
-
-    days_diff = 10
-    currency = "USD"
 
     parser = utils.get_parser("bgp")
     parser_instance = parser()
 
-    for i, arg in enumerate(args):
-        if arg == "-d":
-            if i < len(args) - 1:
-                # Handle non-int input
-                try:
-                    days_diff = int(args[i + 1])
-                except ValueError:
-                    msg = """\
-Wrong day diff format, please specifiy integer number in range 2-2400
-"""
-                    bot.sendMessage(chat_id=chat_id,
-                                    text=msg)
-                    return
-                if days_diff < 2 or days_diff > 2400:
-                    msg = """\
-Wrong day diff format, please specifiy integerr number in range 2-2400
-"""
-                    bot.sendMessage(chat_id=chat_id,
-                                    text=msg)
-                    return
-        if arg == "-c":
-            if i < len(args) - 1:
-                # Validate currency
-                currency = args[i + 1]
-                if currency not in parser.allowed_currencies:
-                    msg = """\
-Invalid currency, valid options are: [{}]
-""".format(", ".join(parser.allowed_currencies))
-                    bot.sendMessage(chat_id=chat_id,
-                                    text=msg)
-                    return
+    preferences = parse_args(bot, update, args)
+
+    days_diff = preferences['days_ago']
+    currency = preferences['currency']
+
+    if currency == 'all':
+        currency = DEFAULT_CURRENCY.upper()
 
     date_diffs = utils.date_diffs_for_long_diff(days_diff)
 
