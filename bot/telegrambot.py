@@ -3,7 +3,7 @@
 import os
 
 import logging
-from typing import Dict, Mapping, Any
+from typing import Mapping, Any
 
 import telegram
 from telegram import Updater
