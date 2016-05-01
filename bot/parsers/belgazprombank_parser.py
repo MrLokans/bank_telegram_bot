@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import datetime
-
+from typing import Sequence
 import requests
 from bs4 import BeautifulSoup
 
@@ -26,7 +26,8 @@ class BelgazpromParser(BaseParser):
         self.short_name = BelgazpromParser.short_name
         self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
 
-    def __get_response_for_the_date(self, d):
+    def __get_response_for_the_date(self,
+                                    d: datetime.date) -> requests.models.Response:
         """Gets page with currency rates for the given date"""
 
         supplied_date = d
@@ -39,17 +40,21 @@ class BelgazpromParser(BaseParser):
         date_params = {"date": str_date}
         return requests.get(BelgazpromParser.BASE_URL, params=date_params)
 
-    def __soup_from_request(self, resp):
+    def __soup_from_request(self,
+                            resp: requests.models.Response) -> BeautifulSoup:
         """Create soup object from the supplied requests response"""
         text = resp.text
         return BeautifulSoup(text, "html.parser")
 
-    def __get_currency_table(self, soup):
+    def __get_currency_table(self,
+                             soup: BeautifulSoup) -> BeautifulSoup:
         """Returns table with exchanges rates from the given
         BeautifulSoup object"""
         return soup.find(id="courses_tab1_form").parent
 
-    def __get_currency_objects(self, cur_table, days_since_now=None):
+    def __get_currency_objects(self,
+                               cur_table: BeautifulSoup,
+                               days_since_now=None) -> Sequence[Currency]:
         """
             Parses BeautifulSoup table with exchanges rates and extracts
             currency data
@@ -62,17 +67,16 @@ class BelgazpromParser(BaseParser):
         # TODO: add data display for the date in the past
 
     @classmethod
-    def __currency_object_from_row(cls, row_object):
+    def __currency_object_from_row(cls,
+                                   row_object: BeautifulSoup) -> Currency:
         table_cols = row_object.find_all('td')
         return Currency(name=table_cols[0].text.strip(),
                         iso=table_cols[1].text,
                         sell=table_cols[2].find(text=True),
                         buy=table_cols[3].find(text=True))
 
-    def get_all_data(self):
-        return [tuple(cur) for cur in self.currencies]
-
-    def get_all_currencies(self, date=None):
+    def get_all_currencies(self,
+                           date: datetime.date=None) -> Sequence[Currency]:
         # TODO: check if string is supplied as date
         if date is None:
             date = datetime.date.today()
@@ -94,11 +98,16 @@ class BelgazpromParser(BaseParser):
 
         return currencies
 
-    def get_currency_for_diff_date(self, diff_days, currency="USD"):
-        former_date = datetime.date.today - datetime.timedelta(days=diff_days)
-        return self.get_currency(currency, date=former_date)
+    def get_currency_for_diff_date(self,
+                                   diff_days: int,
+                                   currency: str="USD") -> Currency:
+        former_date = datetime.date.today() - datetime.timedelta(days=diff_days)
+        currency = self.get_currency(currency, date=former_date)
+        return currency
 
-    def get_currency(self, currency_name="USD", date=None):
+    def get_currency(self,
+                     currency_name:str="USD",
+                     date: datetime.date=None) -> Currency:
         # TODO: requires heavy optimization or caching
         if date is None:
             date = datetime.date.today()

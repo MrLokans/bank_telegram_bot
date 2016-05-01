@@ -1,10 +1,13 @@
 # coding: utf-8
 
 import logging
+import typing
+
+Cur = typing.TypeVar('Cur')
 
 import pymongo
 
-import cache.mongo_settings as settings
+from cache import mongo_settings as settings
 
 
 class MongoCurrencyCache(object):
@@ -14,9 +17,12 @@ class MongoCurrencyCache(object):
         self.logger = logging.getLogger(name=logger_name)
         self.currency_cls = currency_cls
         try:
-            self._client = pymongo.MongoClient(settings.MONGO_HOST,
-                                               int(settings.MONGO_PORT),
-                                               serverSelectionTimeoutMS=self.server_delay)
+            setup = {
+                'host': settings.MONGO_HOST,
+                'port': int(settings.MONGO_PORT),
+                'serverSelectionTimeoutMS': self.server_delay
+            }
+            self._client = pymongo.MongoClient(**setup)
             self._client.server_info()
             self._db = self._client[settings.MONGO_DATABASE]
 
@@ -32,7 +38,10 @@ class MongoCurrencyCache(object):
                                              settings.MONGO_PASSWORD))
             self.is_storage_available = False
 
-    def get_cached_value(self, bank_name, cur_name, date_str):
+    def get_cached_value(self,
+                         bank_name: str,
+                         cur_name: str,
+                         date_str: str) -> Cur:
         """Gets currency object from the cache.
         If currency is not present - returns None"""
 
@@ -52,8 +61,10 @@ class MongoCurrencyCache(object):
             return item
         return None
 
-    def cache_currency(self, bank_name, cur_instance,
-                       date_str):
+    def cache_currency(self,
+                       bank_name: str,
+                       cur_instance: Cur,
+                       date_str: str) -> None:
         """Puts given currency into the cache"""
         dbg_msg = "Trying to cache currency {}-{}-{} in cache.".format(
             bank_name, cur_instance.sell, date_str
@@ -62,7 +73,7 @@ class MongoCurrencyCache(object):
 
         if not self.is_storage_available:
             self.logger.info("Cache is unavailable.")
-            return False
+            return
         save_key = "{}_{}_{}".format(bank_name.lower(),
                                      cur_instance.iso.lower(),
                                      date_str.lower())

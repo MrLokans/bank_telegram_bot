@@ -10,8 +10,8 @@
 * ~~Create local vagrant deploy~~
 * ~~add '/course bank list' option to dispay banks choices~~ **/banks** command is used instead
 *  ~~display exchange change rates.~~ Done via using **/course** -d <diff_days> -c <cur_name>
+*  ~~Type annotations, we use Python 3, why the hell not?~~
 *  Check and update Debian deployment
-*  Type annotations, we use Python 3, why the hell not?
 *  add **/course** bank <bank name> to see data about courses in the given bank
 *  add **/compare** <currency name> see data about currency from diffrent bank
 *  Setup mongodb config, create admin and normal user (dat feel when mongo's not hipster enough)

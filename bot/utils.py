@@ -9,6 +9,8 @@ import glob
 import datetime
 import importlib
 
+from typing import Sequence, Mapping, Any
+
 import settings
 
 from bot_exceptions import BotArgumentParsingError
@@ -16,7 +18,7 @@ from bot_exceptions import BotArgumentParsingError
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
 
-def preferences_from_args(args):
+def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
     """Takes a sequence of strings and tries to find settings, returning default
     values if not found:
     There are args that may be required for any request:
@@ -59,7 +61,7 @@ Wrong day diff format, please specifiy integerr number in range 2-2400
     return preferences
 
 
-def get_currency_from_arg(s):
+def get_currency_from_arg(s: str) -> str:
     """Parse argument string and extracts currency from it
     Logics moved into separate method to provide ability to parse
     multpile currency names
@@ -77,15 +79,13 @@ def get_date_arg(args):
     return date
 
 
-def get_date_from_date_diff(day_difference):
+def get_date_from_date_diff(day_difference: int) -> datetime.date:
     """Returns date n days from now"""
-    now = datetime.datetime.now()
+    now = datetime.date.today()
     return now - datetime.timedelta(days=int(day_difference))
 
 
-# coding: utf-8
-
-def str_from_date(date):
+def str_from_date(date: datetime.date) -> str:
     return date.strftime("%d.%m.%Y")
 
 
@@ -93,7 +93,9 @@ def debug_msg(msg):
     print("DEBUG: {}".format(msg))
 
 
-def date_diffs_for_long_diff(day_diff, min_n=8, max_n=20):
+def date_diffs_for_long_diff(day_diff: int,
+                             min_n: int=8,
+                             max_n: int=20) -> Sequence[int]:
     """
         Takes number of days and splits it into a list of diffs
     """
@@ -145,9 +147,8 @@ def parser_class_from_module(module):
     return None
 
 
-def get_parser(parser_name):
+def get_parser(parser_name: str):
     """Gets parser by its name or short name."""
-    parser = None
     parser_classes = get_parser_classes()
     assert len(parser_classes) > 0
     for parser_class in parser_classes:

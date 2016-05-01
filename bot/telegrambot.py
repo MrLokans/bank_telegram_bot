@@ -3,6 +3,7 @@
 import os
 
 import logging
+from typing import Dict, Mapping, Any
 
 import telegram
 from telegram import Updater
@@ -40,14 +41,14 @@ def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))
 
 
-def parse_args(bot, update, args):
+def parse_args(bot, update, args) -> Mapping[str, Any]:
     try:
         preferences = utils.preferences_from_args(args)
     except BotArgumentParsingError as e:
         logger.exception(str(e))
         bot.sendMessage(chat_id=update.message.chat_id,
                         text=str(e))
-        return
+        return {}
 
     return preferences
 
@@ -168,7 +169,7 @@ rate dynamincs for the specified period of time
 def list_banks(bot, update, args):
     """Show user names of banks that are supported"""
     chat_id = update.message.chat_id
-    parser_classes = get_parser_classes()
+    parser_classes = utils.get_parser_classes()
 
     bank_names = "\n".join(
         parser_cls.name for parser_cls in parser_classes
@@ -180,7 +181,7 @@ def list_banks(bot, update, args):
     return
 
 
-def is_image_cached(image_path, max_n=8):
+def is_image_cached(image_path: str, max_n: int=8) -> bool:
     """Checks whether image with the given name has already been created"""
     return os.path.exists(image_path)
 
