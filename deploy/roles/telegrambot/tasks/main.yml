@@ -22,15 +22,15 @@
     pip: name=virtualenv state=latest
     when: ansible_os_family == 'RedHat'
 
-  - name: Add MrLokans group
+  - name: Add bot group
     group:
-      name=mrlokans
-      state=present
+      name: "{{ bot_group }}"
+      state: present
 
-  - name: Add MrLokans user
+  - name: Add bot user
     user:
-      name=mrlokans
-      groups=users,wheel,mrlokans
+      name: "{{ bot_user }}"
+      groups: users,wheel,{{ bot_group }}
 
   - name: (RedHat) Install GCC fortran compliler and extra libraries
     when: ansible_os_family == 'RedHat'
@@ -73,31 +73,55 @@
   - name: Set permissions for the project folder, to correctly run application with supervisord
     file:
       path: "{{ project_root_dir }}"
-      owner: mrlokans
-      group: mrlokans
+      owner: "{{ bot_user }}"
+      group: "{{ bot_group }}"
       recurse: yes
       state: directory
+
   - name: Create python's virtual environment
     command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }}
     become: yes
-    become_user: mrlokans
+    become_user: "{{ bot_user }}"
 
-  - name: Install bot's dependencies (Debian)
-    when: ansible_os_family == 'Debian'
+  - name: Make sure directory with python wheels exists
+    file:
+      path: "{{ project_root_dir }}wheels"
+      owner: "{{ bot_user }}"
+      group: "{{ bot_group }}"
+      state: directory
+
+  - name: Copy requirements files (platform specific)
+    copy: 
+      src: "{{ ansible_os_family|lower}}_requirements.txt"
+      dest: "{{ project_root_dir }}bot/requirements.txt"
+      owner: "{{ bot_user }}"
+      group: "{{ bot_group }}"
+      mode: 0644
+
+  - name: Check if wheel for matplotlib exists
+    stat: 
+      path: "{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
+    register: mtpltlib_file
+
+  - name: Install bot's dependencies
     pip:
-      requirements="{{ project_root_dir }}"bot/requirements.txt 
-      virtualenv="{{ project_virtualenv_folder }}"
-      extra_args="--no-cache-dir --isolated -vv --disable-pip-version-check"
+      requirements: "{{ project_root_dir }}bot/requirements.txt" 
+      virtualenv: "{{ project_virtualenv_folder }}"
+      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
     become: yes
-    become_user: mrlokans
+    become_user: "{{ bot_user }}"
     notify: restart supervisord
 
-  - name: Install bot's dependencies (RedHat)
-    when: ansible_os_family == 'RedHat'
+  - name: Install matplotlib from wheel if it is present
     pip:
-      requirements="{{ project_root_dir }}"bot/redhat_requirements.txt
-      virtualenv="{{ project_virtualenv_folder }}"
-      extra_args="--no-cache-dir --isolated -vv --disable-pip-version-check"
-    become: yes
-    become_user: mrlokans
-    notify: restart supervisord
+      virtualenv: "{{ project_virtualenv_folder }}"
+      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
+      name: "file:///{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
+    when: mtpltlib_file.stat.isfile
+
+  - name: Install matplotlib if wheel is not present
+    pip:
+      virtualenv: "{{ project_virtualenv_folder }}"
+      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
+      name: "matplotlib"
+    when: mtpltlib_file.stat.isfile not defined

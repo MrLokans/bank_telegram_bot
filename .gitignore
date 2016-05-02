@@ -1,2 +1,6 @@
 **/*.pyc
-credentials.ini
+**/credentials.ini
+.idea
+.vagrant
+bot/img
+img
