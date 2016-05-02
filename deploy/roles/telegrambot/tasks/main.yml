@@ -117,11 +117,11 @@
       virtualenv: "{{ project_virtualenv_folder }}"
       extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
       name: "file:///{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
-    when: mtpltlib_file.stat.isfile
+    when: mtpltlib_file.stat.isreg
 
   - name: Install matplotlib if wheel is not present
     pip:
       virtualenv: "{{ project_virtualenv_folder }}"
       extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
       name: "matplotlib"
-    when: mtpltlib_file.stat.isfile not defined
+    when: mtpltlib_file.stat.isreg not defined
