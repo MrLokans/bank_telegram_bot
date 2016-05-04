@@ -4,6 +4,8 @@ import os
 
 import logging
 from typing import Mapping, Any
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
 from telegram import Updater
@@ -97,7 +99,12 @@ def course(bot, update, args, **kwargs):
             return
 
 
-def show_currency_graph(bot, update, args):
+def result_date_saver(parser, currency, date):
+    return (date, parser.get_currency(currency, date))
+
+
+@run_async
+def show_currency_graph(bot, update, args, **kwargs):
     """Sends user currency graph changes for the specified period of time.
     E.g. user wants to get exchange rates for the US currency for 10 last days,
     he needs to send something like '/graph USD -d 10' """
@@ -135,9 +142,18 @@ def show_currency_graph(bot, update, args):
 
     if not is_image_cached(output_file):
 
-        currencies = [parser_instance.get_currency(currency_name=currency,
-                                                   date=d)
-                      for d in dates]
+        # We use thread pool to asyncronously get pages
+        currencies_deque = deque()
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_date = {executor.submit(result_date_saver,
+                                              parser_instance,
+                                              currency, date): date
+                              for date in dates}
+            for future in as_completed(future_to_date):
+                data = future.result()
+                currencies_deque.append(data)
+
+        currencies = utils.sort_by_value(currencies_deque, dates)
 
         logging.info("Creating a plot.")
         x = [d for d in dates]

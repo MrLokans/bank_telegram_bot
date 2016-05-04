@@ -9,13 +9,27 @@ import glob
 import datetime
 import importlib
 
-from typing import Sequence, Mapping, Any
+from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
 import settings
 
 from bot_exceptions import BotArgumentParsingError
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
+
+
+A = TypeVar('A')
+T = TypeVar('T')
+
+
+def sort_by_value(to_sort: Sequence[Tuple[A, T]],
+                  sort_by: Sequence[A]) -> Sequence[T]:
+    """Sorts two sequences basing on the second one"""
+    to_sort_d = dict(to_sort)
+    result = []
+    for item in sort_by:
+        result.append(to_sort_d[item])
+    return result
 
 
 def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
