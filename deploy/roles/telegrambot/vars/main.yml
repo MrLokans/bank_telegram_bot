@@ -1,4 +1,5 @@
 ---
+wheels_dir: "/home/{{ bot_user }}/downloads/wheels"
 matplotlib_binary: "matplotlib-1.5.1-cp34-cp34m-linux_x86_64.whl"
 bot_user: "mrlokans"
 bot_group: "mrlokans"

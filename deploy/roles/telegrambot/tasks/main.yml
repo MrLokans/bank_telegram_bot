@@ -17,6 +17,8 @@
       - liblapack-dev 
       - libatlas-base-dev
       - git
+      - libxml2-dev
+      - libxslt-dev
 
   - name: Update virtualenv version on RedHat
     pip: name=virtualenv state=latest
@@ -47,6 +49,8 @@
       - python-matplotlib
       - python-pandas
       - git
+      - libxml2-devel
+      - libxslt-devel
 
 
   - name: Copy supervisord telegram config file
@@ -100,28 +104,33 @@
 
   - name: Check if wheel for matplotlib exists
     stat: 
-      path: "{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
+      path: "/home/{{ bot_user }}/downloads/wheels/{{ matplotlib_binary }}"
     register: mtpltlib_file
 
+  - name: Debugging matplotlib state
+    debug:
+      var: mtpltlib_file
+
+  # TODO: place all wheels in a single folder
   - name: Install bot's dependencies
     pip:
       requirements: "{{ project_root_dir }}bot/requirements.txt" 
       virtualenv: "{{ project_virtualenv_folder }}"
-      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
+      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check -f {{ wheels_dir }}"
     become: yes
     become_user: "{{ bot_user }}"
     notify: restart supervisord
 
-  - name: Install matplotlib from wheel if it is present
-    pip:
-      virtualenv: "{{ project_virtualenv_folder }}"
-      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
-      name: "file:///{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
-    when: mtpltlib_file.stat.isreg
+  # - name: Install matplotlib from wheel if it is present
+  #   pip:
+  #     virtualenv: "{{ project_virtualenv_folder }}"
+  #     extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
+  #     name: "file:///{{ project_root_dir}}wheels/{{ matplotlib_binary }}"
+  #   when: mtpltlib_file.stat.exists is defined and mtpltlib_file.stat.exists == True
 
-  - name: Install matplotlib if wheel is not present
-    pip:
-      virtualenv: "{{ project_virtualenv_folder }}"
-      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
-      name: "matplotlib"
-    when: mtpltlib_file.stat.isreg not defined
+  # - name: Install matplotlib if wheel is not present
+  #   pip:
+  #     virtualenv: "{{ project_virtualenv_folder }}"
+  #     extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check"
+  #     name: "matplotlib"
+  #   when: mtpltlib_file.stat.exists is defined and mtpltlib_file.stat.exists == False
