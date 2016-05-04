@@ -22,7 +22,7 @@ def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
     """Takes a sequence of strings and tries to find settings, returning default
     values if not found:
     There are args that may be required for any request:
-    -b <bank_name> - selects a bank by iths short name
+    -b <bank_name> - selects a bank by its short name
     -c <currency_name> - selects currency to get exchange rates for
     -d <date_diff> - parse data for the moment in the past
 
@@ -69,7 +69,7 @@ def get_currency_from_arg(s: str) -> str:
     return s
 
 
-def get_date_arg(args):
+def get_date_arg(args: Sequence[str]):
     """Return date difference from argument sequence if date flag is present"""
     date = 0
     for arg in args:
@@ -142,7 +142,8 @@ def get_parser_classes():
 def parser_class_from_module(module):
     """Inspects module for having a *Parser class"""
     for k in module.__dict__:
-        if isinstance(k, str) and k.endswith("Parser"):
+        is_base_parser = k == "BaseParser"
+        if isinstance(k, str) and k.endswith("Parser") and not is_base_parser:
             return module.__dict__[k]
     return None
 
