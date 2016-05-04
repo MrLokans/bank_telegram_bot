@@ -8,7 +8,7 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
-from telegram.ext import Updater
+from telegram.ext import Updater, RegexHandler, CommandHandler
 from telegram.ext.dispatcher import run_async
 
 
@@ -167,10 +167,10 @@ def show_currency_graph(bot, update, args, **kwargs):
     return
 
 
-def help_user(bot, update, args):
+def help_user(bot, update):
     chat_id = update.message.chat_id
     help_message = """Use following commands:
-/course [<currency_short_name>] - display current exchange rate for the
+/course -d <days ago> -c <currency name>  - display current exchange rate for the
 given currency or for all available currencies.
 /graph -d <days ago> -c <currency name> - plot currency exchange
 rate dynamincs for the specified period of time
@@ -182,7 +182,7 @@ rate dynamincs for the specified period of time
     return
 
 
-def list_banks(bot, update, args):
+def list_banks(bot, update):
     """Show user names of banks that are supported"""
     chat_id = update.message.chat_id
     parser_classes = utils.get_parser_classes()
@@ -207,15 +207,17 @@ def main():
 
     dispatcher = updater.dispatcher
 
-    dispatcher.addTelegramCommandHandler('start', start)
-    dispatcher.addTelegramCommandHandler('help', help_user)
-    dispatcher.addTelegramCommandHandler('course', course)
-    dispatcher.addTelegramCommandHandler('graph', show_currency_graph)
-    dispatcher.addTelegramCommandHandler('banks', list_banks)
+    dispatcher.addHandler(CommandHandler('start', start))
+    dispatcher.addHandler(CommandHandler('help', help_user))
+    dispatcher.addHandler(CommandHandler('course', course, pass_args=True))
+    dispatcher.addHandler(CommandHandler('graph', show_currency_graph, pass_args=True))
+    dispatcher.addHandler(CommandHandler('banks', list_banks))
 
-    dispatcher.addUnknownTelegramCommandHandler(unknown)
     # log all errors
     dispatcher.addErrorHandler(error)
+
+    unknown_handler = RegexHandler(r'/.*', unknown)
+    dispatcher.addHandler(unknown_handler)
 
     updater.start_polling()
     updater.idle()
