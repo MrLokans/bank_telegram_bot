@@ -43,5 +43,32 @@ def benchmark_multiple_downloads():
     # a wrong order
     print(q)
 
+    # TODO: check asyncio and gevent
+
+
+def benchmark_parsing_methods():
+    """Checks whether usage of lxml speed ups parsing"""
+    global dates
+    dates = dates[:]
+    html_parser = utils.get_parser("bgp")(parser="html.parser")
+    lxml_parser = utils.get_parser("bgp")(parser="lxml")
+
+    html_start = time.time()
+    c = [html_parser.get_currency(currency_name="USD",
+                                  date=d)
+         for d in dates]
+    html_finish = time.time()
+    lxml_start = time.time()
+    # TODO: network factor affects a lot, perhaps we should preliminary
+    # get all response texts and then test parsing with them
+    c = [lxml_parser.get_currency(currency_name="USD",
+                                  date=d)
+         for d in dates]
+    lxml_finish = time.time()
+
+    print("LXML avg. time: {}".format((lxml_finish - lxml_start) / len(dates)))
+    print("HTML avg. time: {}".format((html_finish - html_start) / len(dates)))
+
 if __name__ == '__main__':
-    benchmark_multiple_downloads()
+    # benchmark_multiple_downloads()
+    benchmark_parsing_methods()
