@@ -21,10 +21,11 @@ class BelgazpromParser(BaseParser):
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
                           'GBP', 'UAH', 'CHF', 'PLN')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, parser="html.parser", *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
         self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+        self._parser = parser
 
     def __get_response_for_the_date(self,
                                     d: datetime.date) -> requests.models.Response:
@@ -44,7 +45,7 @@ class BelgazpromParser(BaseParser):
                             resp: requests.models.Response) -> BeautifulSoup:
         """Create soup object from the supplied requests response"""
         text = resp.text
-        return BeautifulSoup(text, "html.parser")
+        return BeautifulSoup(text, self._parser)
 
     def __get_currency_table(self,
                              soup: BeautifulSoup) -> BeautifulSoup:
