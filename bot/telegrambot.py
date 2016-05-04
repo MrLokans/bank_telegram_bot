@@ -8,7 +8,7 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
-from telegram import Updater
+from telegram.ext import Updater
 from telegram.ext.dispatcher import run_async
 
 
