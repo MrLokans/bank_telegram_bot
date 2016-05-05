@@ -3,11 +3,8 @@
 import datetime
 from typing import Sequence
 import requests
-from bs4 import BeautifulSoup
 
-# from cache.mongo import MongoCurrencyCache
 from currency import Currency
-# from settings import LOGGER_NAME, logger
 from lxml import etree
 from .base import BaseParser
 
@@ -42,7 +39,9 @@ class NBRBParser(BaseParser):
     @classmethod
     def _response_text_for_date(cls, date: datetime.date) -> str:
         if date < cls.MINIMAL_DATE:
-            msg = "Date you are trying to request is to old, minimal date is {}".format(cls.MINIMAL_DATE)
+            msg = """\
+Date you are trying to request is to old, minimal date is {}
+""".format(cls.MINIMAL_DATE)
             raise ValueError(msg)
         date_str = date.strftime(cls.DATE_FORMAT)
         r = requests.get(cls.BASE_URL, params={"ondate": date_str})
