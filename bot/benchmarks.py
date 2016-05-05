@@ -7,18 +7,22 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import utils
 parser = utils.get_parser("bgp")()
 
-NUMBER_OF_DATES = 35
-date_diffs = list(range(1, NUMBER_OF_DATES + 1))
+NUMBER_OF_DATES = 20
+date_diffs = list(range(10, NUMBER_OF_DATES + 1))
 random.shuffle(date_diffs)
 
 dates = [utils.get_date_from_date_diff(d) for d in date_diffs]
 
 
+def result_date_saver(parser, currency, date):
+    return (date, parser.get_currency(currency, date))
+
+
 def benchmark_multiple_downloads():
     start = time.time()
     c = [parser.get_currency(currency_name="USD",
-                             date=d)
-                             for d in dates]
+                                 date=d)
+         for d in dates]
 
     finish = time.time()
 
@@ -28,7 +32,10 @@ def benchmark_multiple_downloads():
     start = time.time()
 
     with ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_date = {executor.submit(parser.get_currency, "USD", date): date for date in dates}
+        future_to_date = {executor.submit(result_date_saver,
+                                          parser,
+                                          "USD", date): date
+                          for date in dates}
         for future in as_completed(future_to_date):
             data = future.result()
             q.append(data)
@@ -38,10 +45,10 @@ def benchmark_multiple_downloads():
 
     print("Linear time: {}".format(linear_time))
     print("Thread Pool executor time: {}".format(thread_pool_time))
-    print(c)
-    # TODO: what about the order? It makes no sence to get data in
-    # a wrong order
-    print(q)
+    sorted_curs = utils.sort_by_value(q, dates)
+
+    for lin, threaded in zip(c, sorted_curs):
+        print("{}  -  {}\n".format(lin, threaded))
 
     # TODO: check asyncio and gevent
 
@@ -70,5 +77,5 @@ def benchmark_parsing_methods():
     print("HTML avg. time: {}".format((html_finish - html_start) / len(dates)))
 
 if __name__ == '__main__':
-    # benchmark_multiple_downloads()
-    benchmark_parsing_methods()
+    benchmark_multiple_downloads()
+    # benchmark_parsing_methods()

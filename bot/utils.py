@@ -63,7 +63,7 @@ Wrong day diff format, please specifiy integer number in range 2-2400
 
                 if days_diff < 2 or days_diff > 2400:
                     msg = """\
-Wrong day diff format, please specifiy integerr number in range 2-2400
+Wrong day diff format, please specify integer number in range 2-2400
 """
                     raise BotArgumentParsingError(msg)
                 preferences['days_ago'] = days_diff
@@ -72,6 +72,11 @@ Wrong day diff format, please specifiy integerr number in range 2-2400
                 # Validate currency
                 currency = args[i + 1]
                 preferences['currency'] = get_currency_from_arg(currency)
+        if arg == "-b":
+            if i < len(args) - 1:
+                # Validate currency
+                bank_name = args[i + 1]
+                preferences['bank_name'] = bank_name
     return preferences
 
 
@@ -134,8 +139,11 @@ def get_parser_classes():
     """
     parser_classes = []
     parser_files = glob.glob("parsers/*_parser.py")
+    print(glob.glob("*"))
+    print(parser_files)
     module_names = [os.path.basename(os.path.splitext(p)[0])
                     for p in parser_files]
+    print(module_names)
     for module_name in module_names:
         module = importlib.import_module(".".join(["parsers", module_name]))
         parser_class = parser_class_from_module(module)
@@ -164,14 +172,18 @@ def parser_class_from_module(module):
 
 def get_parser(parser_name: str):
     """Gets parser by its name or short name."""
+    parser_name = parser_name.lower()
     parser_classes = get_parser_classes()
     assert len(parser_classes) > 0
+
     for parser_class in parser_classes:
-        names_equal = parser_class.name.lower() == parser_name.lower()
-        short_names_equal = parser_class.short_name == parser_name.lower
+        names_equal = parser_class.name.lower() == parser_name
+        short_names_equal = parser_class.short_name == parser_name
         if names_equal or short_names_equal:
             parser = parser_class
-            break
+            print("Parser found: {}".format(parser))
+            return parser
     else:
-        parser = parser_classes[0]
+        # FIXME: somehow select parser not relying on its order
+        parser = parser_classes[1]
     return parser

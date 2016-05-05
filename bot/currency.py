@@ -7,7 +7,7 @@ class Currency(object):
     def __init__(self, name: str="",
                  iso: str="",
                  sell: Union[float, int]=None,
-                 buy: float=None):
+                 buy: float=None) -> None:
         self.name = name
         self.iso = iso
         self.sell = sell

@@ -64,14 +64,16 @@ def course(bot, update, args, **kwargs):
         return
 
     days_diff = preferences['days_ago']
+    bank_name = preferences['bank_name']
 
-    parser = utils.get_parser("bgp")
+    parser = utils.get_parser(bank_name)
     parser_instance = parser()
 
     parse_date = utils.get_date_from_date_diff(days_diff)
     logger.info("Requesting course for {}".format(str(parse_date)))
 
     if preferences['currency'] == 'all':
+        # We need to send data about all of the currencies
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
         displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
                             for x in all_currencies]
@@ -97,6 +99,11 @@ def course(bot, update, args, **kwargs):
             bot.sendMessage(chat_id=chat_id,
                             text=text)
             return
+    else:
+        text = "Unknown currency: {}".format(currency)
+        bot.sendMessage(chat_id=chat_id,
+                        text=text)
+        return
 
 
 def result_date_saver(parser, currency, date):
@@ -112,15 +119,16 @@ def show_currency_graph(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
-    parser = utils.get_parser("bgp")
-    parser_instance = parser()
-
     preferences = parse_args(bot, update, args)
     if not preferences:
         return
 
     days_diff = preferences['days_ago']
     currency = preferences['currency']
+    bank_name = preferences['bank_name']
+
+    parser = utils.get_parser(bank_name)
+    parser_instance = parser()
 
     if currency == 'all':
         currency = DEFAULT_CURRENCY.upper()
@@ -188,10 +196,11 @@ def list_banks(bot, update):
     parser_classes = utils.get_parser_classes()
 
     bank_names = "\n".join(
-        parser_cls.name for parser_cls in parser_classes
+        parser_cls.name + "\t:\t" + parser_cls.short_name
+        for parser_cls in parser_classes
     )
 
-    msg = "Current banks are now supported: \n {}".format(bank_names)
+    msg = "Current banks are now supported: \n{}".format(bank_names)
     bot.sendMessage(chat_id=chat_id,
                     text=msg)
     return
