@@ -44,7 +44,7 @@ def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
     and a recognition of parameters w/o those unfriendly CLI keys like -d or -c
     """
     preferences = {
-        "days_ago": 0,
+        "days_ago": 30,
         "currency": "all",  # We want to get data about all present currencies
         "bank_name": settings.DEFAULT_PARSER_NAME
     }
@@ -139,11 +139,8 @@ def get_parser_classes():
     """
     parser_classes = []
     parser_files = glob.glob("parsers/*_parser.py")
-    print(glob.glob("*"))
-    print(parser_files)
     module_names = [os.path.basename(os.path.splitext(p)[0])
                     for p in parser_files]
-    print(module_names)
     for module_name in module_names:
         module = importlib.import_module(".".join(["parsers", module_name]))
         parser_class = parser_class_from_module(module)
