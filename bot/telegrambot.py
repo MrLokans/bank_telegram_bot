@@ -1,14 +1,21 @@
 # coding: utf-8
 
 import os
-
+from uuid import uuid4
 import logging
 from typing import Mapping, Any
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
-from telegram.ext import Updater, RegexHandler, CommandHandler
+from telegram import InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import (
+    Updater,
+    RegexHandler,
+    CommandHandler,
+    InlineQueryHandler
+)
+
 from telegram.ext.dispatcher import run_async
 
 
@@ -206,6 +213,26 @@ def list_banks(bot, update):
     return
 
 
+def inline_rate(bot, update):
+    query = update.inline_query.query
+    results = list()
+    # results.append(InlineQueryResultArticle(query.upper(),
+    #                                         'Caps',
+    #                                         InputTextMessageContent(query.upper())))
+    parser_classes = utils.get_parser_classes()
+    parsers = [parser() for parser in parser_classes if parser.short_name != 'mtb']
+
+    for parser in parsers:
+        if query.upper() in parser.allowed_currencies:
+            cur_value = parser.get_currency(query.upper())
+            mes_content = InputTextMessageContent(cur_value.sell)
+            results.append(InlineQueryResultArticle(id=uuid4(),
+                                                    title=parser.name,
+                                                    input_message_content=mes_content))
+
+    bot.answerInlineQuery(update.inline_query.id, results)
+
+
 def is_image_cached(image_path: str, max_n: int=8) -> bool:
     """Checks whether image with the given name has already been created"""
     return os.path.exists(image_path)
@@ -221,6 +248,8 @@ def main():
     dispatcher.addHandler(CommandHandler('course', course, pass_args=True))
     dispatcher.addHandler(CommandHandler('graph', show_currency_graph, pass_args=True))
     dispatcher.addHandler(CommandHandler('banks', list_banks))
+    inline_rate_handler = InlineQueryHandler(inline_rate)
+    dispatcher.addHandler(inline_rate_handler)
 
     # log all errors
     dispatcher.addErrorHandler(error)

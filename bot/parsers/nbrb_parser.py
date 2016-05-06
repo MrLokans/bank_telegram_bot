@@ -71,6 +71,7 @@ Date you are trying to request is to old, minimal date is {}
 
     def get_all_currencies(self,
                            date: datetime.date=None) -> Sequence[Currency]:
+        # TODO: add aggressive caching
         if date is None:
             date = datetime.date.today()
 
