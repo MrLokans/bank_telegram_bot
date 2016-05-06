@@ -17,9 +17,12 @@ def reset_plot(plot=plt):
 # TODO: This function should be less specific
 def render_exchange_rate_plot(x_axe, y_buy, y_sell, output_file):
     """Renders plot to the given file"""
-    # Extra setupto orrectly display dates on X-axis
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
-    plt.gca().xaxis.set_major_locator(mdates.DayLocator())
+    # Extra setup to correctly display dates on X-axis
+    xtick_locator = mdates.AutoDateLocator()
+    xtick_formatter = mdates.AutoDateFormatter(xtick_locator)
+
+    plt.gca().xaxis.set_major_formatter(xtick_formatter)
+    plt.gca().xaxis.set_major_locator(xtick_locator)
     plt.plot(x_axe, y_buy, label='Buy')
     plt.plot(x_axe, y_sell, label='Sell')
     plt.legend()
