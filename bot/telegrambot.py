@@ -8,7 +8,11 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
-from telegram import InlineQueryResultArticle, InputTextMessageContent
+from telegram import (
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    ParseMode)
+
 from telegram.ext import (
     Updater,
     RegexHandler,
@@ -216,19 +220,27 @@ def list_banks(bot, update):
 def inline_rate(bot, update):
     query = update.inline_query.query
     results = list()
-    # results.append(InlineQueryResultArticle(query.upper(),
-    #                                         'Caps',
-    #                                         InputTextMessageContent(query.upper())))
+
     parser_classes = utils.get_parser_classes()
-    parsers = [parser() for parser in parser_classes if parser.short_name != 'mtb']
+    parsers = [parser()
+               for parser in parser_classes
+               if parser.short_name != 'mtb']
 
     for parser in parsers:
-        if query.upper() in parser.allowed_currencies:
-            cur_value = parser.get_currency(query.upper())
-            mes_content = InputTextMessageContent(cur_value.sell)
-            results.append(InlineQueryResultArticle(id=uuid4(),
-                                                    title=parser.name,
-                                                    input_message_content=mes_content))
+        if query.upper() not in parser.allowed_currencies:
+            continue
+        cur_value = parser.get_currency(query.upper())
+        bank_name = parser.name
+        text = "{}\n<b>{}</b>: {}".format(bank_name,
+                                          query.upper(),
+                                          cur_value.sell)
+        mes_content = InputTextMessageContent(text,
+                                              parse_mode=ParseMode.HTML)
+
+        result = InlineQueryResultArticle(id=uuid4(),
+                                          title=parser.name,
+                                          input_message_content=mes_content)
+        results.append(result)
 
     bot.answerInlineQuery(update.inline_query.id, results)
 
