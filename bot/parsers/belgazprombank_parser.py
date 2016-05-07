@@ -12,7 +12,7 @@ from .base import BaseParser
 
 
 class BelgazpromParser(BaseParser):
-
+    is_active = True
     BASE_URL = 'http://belgazprombank.by/about/kursi_valjut/'
     DATE_FORMAT = "%d.%m.%Y"
     name = 'Белгазпромбанк'

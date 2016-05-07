@@ -12,7 +12,7 @@ from .base import BaseParser
 
 
 class MtbankParser(BaseParser):
-
+    is_active = False
     BASE_URL = ''
     DATE_FORMAT = "%d.%m.%Y"
     name = 'МТБанк'

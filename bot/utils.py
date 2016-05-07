@@ -140,7 +140,7 @@ def get_default_parser_class(parsers_dir=settings.PARSERS_DIR):
     return default_parser
 
 
-def get_parser_classes():
+def get_parser_classes(active_only: bool=True):
     """
         Scans for classes that provide bank scraping and returns them as a list
     """
@@ -152,7 +152,12 @@ def get_parser_classes():
         module = importlib.import_module(".".join(["parsers", module_name]))
         parser_class = parser_class_from_module(module)
         if parser_class is not None:
-            parser_classes.append(parser_class)
+            if not active_only:
+                parser_classes.append(parser_class)
+                continue
+            has_active_field = hasattr(parser_class, "is_active")
+            if has_active_field and parser_class.is_active:
+                parser_classes.append(parser_class)
 
     # We didn't find any extra class (techncally, currently it is not possible,
     # but who cares?) so we return default one

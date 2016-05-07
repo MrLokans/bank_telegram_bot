@@ -10,7 +10,7 @@ from .base import BaseParser
 
 
 class NBRBParser(BaseParser):
-
+    is_active = True
     BASE_URL = 'http://www.nbrb.by/Services/XmlExRates.aspx'
     DATE_FORMAT = "%m/%d/%Y"
     name = 'Нацбанк РБ'
