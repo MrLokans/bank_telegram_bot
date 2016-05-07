@@ -46,7 +46,7 @@ def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
     preferences = {
         "days_ago": 30,
         "currency": "all",  # We want to get data about all present currencies
-        "bank_name": settings.DEFAULT_PARSER_NAME
+        "bank_name": None
     }
 
     for i, arg in enumerate(args):
@@ -113,8 +113,8 @@ def debug_msg(msg):
 
 
 def date_diffs_for_long_diff(day_diff: int,
-                             min_n: int=8,
-                             max_n: int=20) -> Sequence[int]:
+                             min_n: int=12,
+                             max_n: int=30) -> Sequence[int]:
     """
         Takes number of days and splits it into a list of diffs
     """
@@ -131,6 +131,13 @@ def date_diffs_for_long_diff(day_diff: int,
         result = [x * portion for x in range(0, max_n - 1)]
         result.append(rest + result[-1])
         return result
+
+
+def get_default_parser_class(parsers_dir=settings.PARSERS_DIR):
+    parser_path = ".".join([parsers_dir, settings.DEFAULT_PARSER_MODULE])
+    default_module = importlib.import_module(parser_path)
+    default_parser = parser_class_from_module(default_module)
+    return default_parser
 
 
 def get_parser_classes():
@@ -150,12 +157,18 @@ def get_parser_classes():
     # We didn't find any extra class (techncally, currently it is not possible,
     # but who cares?) so we return default one
     if len(parser_classes) == 0:
-        parser_path = ".".join(["parsers", settings.DEFAULT_PARSER_MODULE])
-        default_module = importlib.import_module(parser_path)
-        default_class = parser_class_from_module(default_module)
-        parser_classes = [default_class]
+        default_parser = get_default_parser_class()
+        parser_classes = [default_parser]
 
     return parser_classes
+
+
+def get_bank_names() -> Sequence[str]:
+    """Get all available bank short and full names"""
+    parser_classes = get_parser_classes()
+    bank_names = [c.name for c in parser_classes]
+    bank_short_names = [c.short_name for c in parser_classes]
+    return bank_names + bank_short_names
 
 
 def parser_class_from_module(module):

@@ -26,18 +26,36 @@ from telegram.ext.dispatcher import run_async
 from bot_exceptions import BotArgumentParsingError
 import plotting
 import utils
-from settings import logger, DEFAULT_CURRENCY
+from settings import logger, DEFAULT_CURRENCY, DEFAULT_PARSER_NAME
 
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
+USER_BANK_SELECTION_CACHE = {}
 
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
     raise ValueError("No API token specified.")
+
+
+def get_user_selected_bank(user_id: str,
+                           cache: Mapping[str, str]=USER_BANK_SELECTION_CACHE) -> str:
+    """Finds out whether the given user has bank associated with,
+    if not - returns the default one"""
+    if user_id not in cache:
+        bank_name = DEFAULT_PARSER_NAME
+    else:
+        bank_name = cache[user_id]
+    return bank_name
+
+
+def set_user_default_bank(user_id: str,
+                          bank_name: str,
+                          cache: Mapping[str, str]=USER_BANK_SELECTION_CACHE) -> None:
+    cache[user_id] = bank_name
 
 
 def start(bot, update):
@@ -74,8 +92,11 @@ def course(bot, update, args, **kwargs):
     if not preferences:
         return
 
+    user_id = str(update.message.from_user.id)
     days_diff = preferences['days_ago']
     bank_name = preferences['bank_name']
+    if not bank_name:
+        bank_name = get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
     parser_instance = parser()
@@ -127,6 +148,7 @@ def show_currency_graph(bot, update, args, **kwargs):
     E.g. user wants to get exchange rates for the US currency for 10 last days,
     he needs to send something like '/graph USD -d 10' """
 
+    user_id = str(update.message.from_user.id)
     chat_id = update.message.chat_id
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
@@ -137,6 +159,8 @@ def show_currency_graph(bot, update, args, **kwargs):
     days_diff = preferences['days_ago']
     currency = preferences['currency']
     bank_name = preferences['bank_name']
+    if not bank_name:
+        bank_name = get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
     parser_instance = parser()
@@ -194,6 +218,7 @@ given currency or for all available currencies.
 /graph -d <days ago> -c <currency name> - plot currency exchange
 rate dynamincs for the specified period of time
 /banks - list names of currently supported banks.
+/set <bank_name> - sets default bank name for all of the operations
 """
     bot.sendMessage(chat_id=chat_id,
                     text=help_message)
@@ -215,6 +240,31 @@ def list_banks(bot, update):
     bot.sendMessage(chat_id=chat_id,
                     text=msg)
     return
+
+
+def set_default_bank(bot, update, args):
+    chat_id = update.message.chat_id
+    user_id = str(update.message.from_user.id)
+
+    if len(args) != 1:
+        msg = "Incorrect number of arguments, please specify bank name"
+        bot.sendMessage(chat_id=chat_id,
+                        text=msg)
+        return
+    bank_name = args[0].upper()
+
+    available_names = utils.get_bank_names()
+    bank_names_lower = set(map(lambda x: x.lower(), available_names))
+    if bank_name.lower() not in bank_names_lower:
+        bank_names = ", ".join(available_names)
+        msg = "Incorrect bank name specified, available names are: {}"
+        bot.sendMessage(chat_id=chat_id,
+                        text=msg.format(bank_names))
+        return
+    set_user_default_bank(user_id, bank_name)
+    msg = "Default bank succesfully set to {}"
+    bot.sendMessage(chat_id=chat_id,
+                    text=msg.format(bank_name))
 
 
 def inline_rate(bot, update):
@@ -260,6 +310,7 @@ def main():
     dispatcher.addHandler(CommandHandler('course', course, pass_args=True))
     dispatcher.addHandler(CommandHandler('graph', show_currency_graph, pass_args=True))
     dispatcher.addHandler(CommandHandler('banks', list_banks))
+    dispatcher.addHandler(CommandHandler('set', set_default_bank, pass_args=True))
     inline_rate_handler = InlineQueryHandler(inline_rate)
     dispatcher.addHandler(inline_rate_handler)
 
