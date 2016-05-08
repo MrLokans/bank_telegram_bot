@@ -1,7 +1,7 @@
 # coding: utf-8
 import re
 import datetime
-from typing import Sequence
+from typing import Sequence, Set
 
 import requests
 from bs4 import BeautifulSoup
@@ -63,7 +63,7 @@ class BPSParser(object):
             return match.groupdict()["value"]
         raise ValueError("Incorrect currency supplied: {}".format(cur))
 
-    def get_all_currencies(self, date=None) -> set[Currency]:
+    def get_all_currencies(self, date=None) -> Set[Currency]:
         """Get all available currencies for the given date
         (both sell and purchase)"""
         # FIXME: add caching
