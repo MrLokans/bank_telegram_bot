@@ -39,10 +39,11 @@ class BelgazpromParser(BaseParser):
         str_date = datetime.date.strftime(supplied_date,
                                           BelgazpromParser.DATE_FORMAT)
         date_params = {"date": str_date}
-        return requests.get(BelgazpromParser.BASE_URL, params=date_params)
+        r = requests.get(BelgazpromParser.BASE_URL, params=date_params)
+        return r
 
     def __soup_from_response(self,
-                            resp: requests.models.Response) -> BeautifulSoup:
+                             resp: requests.models.Response) -> BeautifulSoup:
         """Create soup object from the supplied requests response"""
         text = resp.text
         return BeautifulSoup(text, self._parser)
@@ -73,8 +74,8 @@ class BelgazpromParser(BaseParser):
         table_cols = row_object.find_all('td')
         return Currency(name=table_cols[0].text.strip(),
                         iso=table_cols[1].text,
-                        sell=int(table_cols[2].find(text=True)),
-                        buy=int(table_cols[3].find(text=True)))
+                        sell=float(table_cols[3].find(text=True)),
+                        buy=float(table_cols[2].find(text=True)))
 
     def get_all_currencies(self,
                            date: datetime.date=None) -> Sequence[Currency]:

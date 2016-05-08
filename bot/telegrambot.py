@@ -107,9 +107,11 @@ def course(bot, update, args, **kwargs):
     if preferences['currency'] == 'all':
         # We need to send data about all of the currencies
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
-        displayed_values = ['{}: {} {}'.format(x.iso, x.sell, x.buy)
+        all_currencies = list(sorted(all_currencies, key=lambda x: x.iso))
+        displayed_values = ['{}: {} {}'.format(x.iso, x.buy, x.sell)
                             for x in all_currencies]
-        currencies_text_value = "\n".join(displayed_values)
+        header = ["Покупка\tПродажа", ]
+        currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
                         text="Currencies: \n{}".format(currencies_text_value))
@@ -157,6 +159,9 @@ def show_currency_graph(bot, update, args, **kwargs):
         return
 
     days_diff = preferences['days_ago']
+    if days_diff == 0:
+        # Well, it's dirty
+        days_diff = 30
     currency = preferences['currency']
     bank_name = preferences['bank_name']
     if not bank_name:
@@ -197,7 +202,6 @@ def show_currency_graph(bot, update, args, **kwargs):
                 currencies_deque.append(data)
 
         currencies = utils.sort_by_value(currencies_deque, dates)
-
         logging.info("Creating a plot.")
         x = [d for d in dates]
         y_buy = [c.buy for c in currencies]

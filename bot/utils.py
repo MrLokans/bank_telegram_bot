@@ -44,7 +44,7 @@ def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
     and a recognition of parameters w/o those unfriendly CLI keys like -d or -c
     """
     preferences = {
-        "days_ago": 30,
+        "days_ago": 0,
         "currency": "all",  # We want to get data about all present currencies
         "bank_name": None
     }
