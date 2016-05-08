@@ -41,7 +41,7 @@ class BelgazpromParser(BaseParser):
         date_params = {"date": str_date}
         return requests.get(BelgazpromParser.BASE_URL, params=date_params)
 
-    def __soup_from_request(self,
+    def __soup_from_response(self,
                             resp: requests.models.Response) -> BeautifulSoup:
         """Create soup object from the supplied requests response"""
         text = resp.text
@@ -73,8 +73,8 @@ class BelgazpromParser(BaseParser):
         table_cols = row_object.find_all('td')
         return Currency(name=table_cols[0].text.strip(),
                         iso=table_cols[1].text,
-                        sell=table_cols[2].find(text=True),
-                        buy=table_cols[3].find(text=True))
+                        sell=int(table_cols[2].find(text=True)),
+                        buy=int(table_cols[3].find(text=True)))
 
     def get_all_currencies(self,
                            date: datetime.date=None) -> Sequence[Currency]:
@@ -84,7 +84,7 @@ class BelgazpromParser(BaseParser):
         assert isinstance(date, datetime.date), "Incorrect date supplied"
 
         r = self.__get_response_for_the_date(date)
-        s = self.__soup_from_request(r)
+        s = self.__soup_from_response(r)
         currency_table = self.__get_currency_table(s)
         currencies = self.__get_currency_objects(currency_table)
 
@@ -107,7 +107,7 @@ class BelgazpromParser(BaseParser):
         return currency
 
     def get_currency(self,
-                     currency_name:str="USD",
+                     currency_name: str="USD",
                      date: datetime.date=None) -> Currency:
         # TODO: requires heavy optimization or caching
         if date is None:
@@ -135,4 +135,4 @@ class BelgazpromParser(BaseParser):
                     self._cache.cache_currency(self.short_name, cur, str_date)
                 return cur
         else:
-            return Currency('NoValue', '', '', '')
+            return Currency.empty_currency()
