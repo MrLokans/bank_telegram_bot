@@ -7,7 +7,7 @@ class Currency(object):
     def __init__(self, name: str="",
                  iso: str="",
                  sell: Union[float, int]=None,
-                 buy: float=None) -> None:
+                 buy: Union[float, int]=None) -> None:
         self.name = name
         self.iso = iso
         self.sell = sell
@@ -21,3 +21,18 @@ class Currency(object):
         return "<Currency {}: {} : {}>".format(self.iso,
                                                self.sell,
                                                self.buy if self.buy else "-")
+
+    def __eq__(self, other):
+        sell_equal = self.sell == other.sell
+        buy_equal = self.buy == other.buy
+        iso_equal = self.iso == other.iso
+        return sell_equal and buy_equal and iso_equal
+
+    def __hash__(self) -> int:
+        s = self.iso + str(self.sell) + str(self.buy)
+        return hash(s)
+
+    @classmethod
+    def empty_currency(cls):
+        return Currency("NoValue", "", 0, 0)
+
