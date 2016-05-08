@@ -3,6 +3,11 @@
 
 class BaseParser(object):
 
+    is_active = False
+    allowed_currencies = tuple()
+    name = 'Base Parser'
+    short_name = 'base'
+
     def get_all_currencies(self, date=None):
         """Get all available currencies for the given date
         (both sell and purchase)"""
