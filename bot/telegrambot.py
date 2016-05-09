@@ -251,10 +251,18 @@ def set_default_bank(bot, update, args):
     user_id = str(update.message.from_user.id)
 
     if len(args) != 1:
-        msg = "Incorrect number of arguments, please specify bank name"
-        bot.sendMessage(chat_id=chat_id,
-                        text=msg)
-        return
+        # Send user data about the bank he is currently associated with
+        if len(args) == 0:
+            default_bank = get_user_selected_bank(user_id)
+            msg = "Your currently selected bank is {}".format(default_bank)
+            bot.sendMessage(chat_id=chat_id,
+                            text=msg)
+            return
+        else:
+            msg = "Incorrect number of arguments, please specify bank name"
+            bot.sendMessage(chat_id=chat_id,
+                            text=msg)
+            return
     bank_name = args[0].upper()
 
     available_names = utils.get_bank_names()
