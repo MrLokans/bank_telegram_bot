@@ -223,6 +223,7 @@ given currency or for all available currencies.
 rate dynamincs for the specified period of time
 /banks - list names of currently supported banks.
 /set <bank_name> - sets default bank name for all of the operations
+/best -c <cur_name> -d <date diff> - best exchange rate for the given currency
 """
     bot.sendMessage(chat_id=chat_id,
                     text=help_message)
@@ -279,14 +280,51 @@ def set_default_bank(bot, update, args):
                     text=msg.format(bank_name))
 
 
+@run_async
+def best_course(bot, update, args, **kwargs):
+    """Gets the best course rate for available banks."""
+    user_id = str(update.message.from_user.id)
+    chat_id = update.message.chat_id
+    bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+
+    preferences = parse_args(bot, update, args)
+    if not preferences:
+        return
+    days_diff = preferences['days_ago']
+    currency = preferences['currency']
+    if currency == 'all':
+        currency = 'USD'
+    bank_name = preferences['bank_name']
+    if not bank_name:
+        bank_name = get_user_selected_bank(user_id)
+    d = utils.get_date_from_date_diff(days_diff)
+    parser_classes = utils.get_parser_classes()
+    parsers = [parser() for parser in parser_classes
+               if parser.short_name != 'nbrb']
+
+    results = [(p.name, p.get_currency(currency, d)) for p in parsers]
+    best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
+    best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
+
+    buy_msg = "Купля {}: <b>{}</b> - {}"
+    buy_msg = buy_msg.format(best_buy[1].iso, best_buy[0], best_buy[1].buy)
+    # TODO: add allignment
+    sell_msg = "Продажа {}: <b>{}</b> - {}"
+    sell_msg = sell_msg.format(best_sell[1].iso, best_sell[0], best_sell[1].sell)
+    msg = "\n".join([buy_msg, sell_msg])
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=msg,
+                    parse_mode=ParseMode.HTML)
+    return
+
+
 def inline_rate(bot, update):
     query = update.inline_query.query
     results = list()
 
     parser_classes = utils.get_parser_classes()
     parsers = [parser()
-               for parser in parser_classes
-               if parser.short_name != 'mtb']
+               for parser in parser_classes]
 
     for parser in parsers:
         if query.upper() not in parser.allowed_currencies:
@@ -323,6 +361,7 @@ def main():
     dispatcher.addHandler(CommandHandler('graph', show_currency_graph, pass_args=True))
     dispatcher.addHandler(CommandHandler('banks', list_banks))
     dispatcher.addHandler(CommandHandler('set', set_default_bank, pass_args=True))
+    dispatcher.addHandler(CommandHandler('best', best_course, pass_args=True))
     inline_rate_handler = InlineQueryHandler(inline_rate)
     dispatcher.addHandler(inline_rate_handler)
 
