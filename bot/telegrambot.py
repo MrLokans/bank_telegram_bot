@@ -3,7 +3,7 @@
 import os
 from uuid import uuid4
 import logging
-from typing import Mapping, Any
+from typing import Mapping, Any, Dict, Tuple
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -280,37 +280,46 @@ def set_default_bank(bot, update, args):
                     text=msg.format(bank_name))
 
 
+def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
+    """Get best sell and buy rates for available banks"""
+    parser_classes = utils.get_parser_classes()
+    parsers = [parser() for parser in parser_classes
+               if parser.short_name != 'nbrb']
+    results = [(p.name, p.get_currency(currency)) for p in parsers]
+    best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
+    best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
+
+    result = {
+        "buy": best_buy,
+        "sell": best_sell
+    }
+    return result
+
+
 @run_async
 def best_course(bot, update, args, **kwargs):
     """Gets the best course rate for available banks."""
-    user_id = str(update.message.from_user.id)
     chat_id = update.message.chat_id
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
     preferences = parse_args(bot, update, args)
     if not preferences:
         return
-    days_diff = preferences['days_ago']
     currency = preferences['currency']
     if currency == 'all':
         currency = 'USD'
-    bank_name = preferences['bank_name']
-    if not bank_name:
-        bank_name = get_user_selected_bank(user_id)
-    d = utils.get_date_from_date_diff(days_diff)
-    parser_classes = utils.get_parser_classes()
-    parsers = [parser() for parser in parser_classes
-               if parser.short_name != 'nbrb']
 
-    results = [(p.name, p.get_currency(currency, d)) for p in parsers]
-    best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
-    best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
+    best = get_best_currencies(currency)
 
     buy_msg = "Купля {}: <b>{}</b> - {}"
-    buy_msg = buy_msg.format(best_buy[1].iso, best_buy[0], best_buy[1].buy)
+    buy_msg = buy_msg.format(best["buy"][1].iso,
+                             best["buy"][0],
+                             best["buy"][1].buy)
     # TODO: add allignment
     sell_msg = "Продажа {}: <b>{}</b> - {}"
-    sell_msg = sell_msg.format(best_sell[1].iso, best_sell[0], best_sell[1].sell)
+    sell_msg = sell_msg.format(best["sell"][1].iso,
+                               best["sell"][0],
+                               best["sell"][1].sell)
     msg = "\n".join([buy_msg, sell_msg])
     bot.sendMessage(chat_id=update.message.chat_id,
                     text=msg,
@@ -320,6 +329,8 @@ def best_course(bot, update, args, **kwargs):
 
 def inline_rate(bot, update):
     query = update.inline_query.query
+    query_list = query.split(" ")
+
     results = list()
 
     parser_classes = utils.get_parser_classes()
@@ -327,6 +338,37 @@ def inline_rate(bot, update):
                for parser in parser_classes]
 
     for parser in parsers:
+        # Best exchange rate in inline mode
+        # TODO: write wrapper function to handle inputs like this one
+        if len(query_list) == 2 and "best" in query_list:
+            # TODO: this feature is experimental and
+            # not-optimized at all, it is SLOW
+            # Mutating original list is not a great ideas
+            temp_list = query_list[:]
+            temp_list.remove("best")
+            currency = temp_list[0]
+            if currency.upper() not in parser.allowed_currencies:
+                continue
+            best = get_best_currencies(currency)
+            buy_msg = "Купля {}: <b>{}</b> - {}"
+            buy_msg = buy_msg.format(best["buy"][1].iso,
+                                     best["buy"][0],
+                                     best["buy"][1].buy)
+            # TODO: add allignment
+            sell_msg = "Продажа {}: <b>{}</b> - {}"
+            sell_msg = sell_msg.format(best["sell"][1].iso,
+                                       best["sell"][0],
+                                       best["sell"][1].sell)
+            msg = "\n".join([buy_msg, sell_msg])
+
+            res = InputTextMessageContent(msg,
+                                          parse_mode=ParseMode.HTML)
+            result = InlineQueryResultArticle(id=uuid4(),
+                                              title="Лучший курс",
+                                              input_message_content=res)
+
+            bot.answerInlineQuery(update.inline_query.id, [result])
+            return
         if query.upper() not in parser.allowed_currencies:
             continue
         cur_value = parser.get_currency(query.upper())
