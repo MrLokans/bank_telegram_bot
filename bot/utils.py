@@ -8,12 +8,14 @@ import os
 import glob
 import datetime
 import importlib
+import itertools
 
 from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
 import settings
 
 from bot_exceptions import BotArgumentParsingError
+from currency import Currency
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
@@ -202,3 +204,23 @@ def get_parser(parser_name: str):
         # FIXME: somehow select parser not relying on its order
         parser = parser_classes[1]
     return parser
+
+
+def sort_currencies(currencies: Sequence[Currency]) -> Sequence[Currency]:
+    """Return new sorted list of currencies so that some specific ones
+    are always in top and other are sorted alphabetically."""
+    priority = {
+        "USD": 1,
+        "EUR": 2,
+        "RUB": 3
+    }
+    specific = []
+    generic = []
+    for item in currencies:
+        if item.iso in priority:
+            specific.append(item)
+        else:
+            generic.append(item)
+    sorted_specific = sorted(specific, key=lambda x: priority[x.iso])
+    sorted_generic = sorted(generic, key=lambda x: x.iso)
+    return list(itertools.chain(sorted_specific, sorted_generic))

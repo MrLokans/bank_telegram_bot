@@ -7,8 +7,11 @@ from utils import (
     get_date_arg,
     get_date_from_date_diff,
     str_from_date,
-    date_diffs_for_long_diff
+    date_diffs_for_long_diff,
+    sort_currencies
 )
+
+from currency import Currency
 
 
 class TestUtils(unittest.TestCase):
@@ -62,6 +65,19 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(date_diffs_for_long_diff(days),
                          [0, 1, 2, 3, 4, 5, 6, 10])
 
+    def test_generic_currencies_sorted_correctly(self):
+        c1 = Currency(iso="PLZ", buy=20, sell=30)
+        c2 = Currency(iso="AUD", buy=20, sell=30)
+        c3 = Currency(iso="BLZ", buy=20, sell=30)
+        c4 = Currency(iso="ZLT", buy=20, sell=30)
+        self.assertEqual(sort_currencies([c1, c2, c3, c4]), [c2, c3, c1, c4])
+
+    def test_specific_currencies_sorted_correctly(self):
+        c1 = Currency(iso="RUB", buy=20, sell=30)
+        c2 = Currency(iso="USD", buy=20, sell=30)
+        c3 = Currency(iso="BLZ", buy=20, sell=30)
+        c4 = Currency(iso="ZLT", buy=20, sell=30)
+        self.assertEqual(sort_currencies([c1, c2, c3, c4]), [c2, c1, c3, c4])
 
 if __name__ == '__main__':
     unittest.main()

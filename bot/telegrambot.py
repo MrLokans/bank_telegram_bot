@@ -4,7 +4,7 @@ import os
 from uuid import uuid4
 import logging
 from typing import Mapping, Any, Dict, Tuple
-from collections import deque
+from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import telegram
@@ -33,6 +33,8 @@ API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
 USER_BANK_SELECTION_CACHE = {}
+
+BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])
 
 
 api_token = os.environ.get(API_ENV_NAME, '')
@@ -107,7 +109,8 @@ def course(bot, update, args, **kwargs):
     if preferences['currency'] == 'all':
         # We need to send data about all of the currencies
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
-        all_currencies = list(sorted(all_currencies, key=lambda x: x.iso))
+
+        all_currencies = utils.sort_currencies(all_currencies)
         displayed_values = ['{}: {} {}'.format(x.iso, x.buy, x.sell)
                             for x in all_currencies]
         header = ["Покупка\tПродажа", ]
