@@ -111,13 +111,17 @@ def course(bot, update, args, **kwargs):
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
 
         all_currencies = utils.sort_currencies(all_currencies)
-        displayed_values = ['{}: {} {}'.format(x.iso, x.buy, x.sell)
+        displayed_values = ['<b>{:<5}</b>{:<8}{:<8}'.format(x.iso + ":",
+                                                            x.buy,
+                                                            x.sell)
                             for x in all_currencies]
         header = ["Покупка\tПродажа", ]
+
         currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
-                        text="Currencies: \n{}".format(currencies_text_value))
+                        text="Currencies: \n{}".format(currencies_text_value),
+                        parse_mode=ParseMode.HTML)
 
         return
 
@@ -132,7 +136,9 @@ def course(bot, update, args, **kwargs):
                             text="Unknown currency: {}".format(args[0]))
             return
         else:
-            text = "{}: {} {}".format(cur.iso, cur.sell, cur.buy)
+            text = "'<b>{:<5}</b>{:<8}{:<8}'".format(cur.iso + ":",
+                                                     cur.sell,
+                                                     cur.buy)
             bot.sendMessage(chat_id=chat_id,
                             text=text)
             return
