@@ -145,7 +145,8 @@ def course(bot, update, args, **kwargs):
     else:
         text = "Unknown currency: {}".format(currency)
         bot.sendMessage(chat_id=chat_id,
-                        text=text)
+                        text=text,
+                        parse_mode=ParseMode.HTML)
         return
 
 
