@@ -79,7 +79,6 @@ class BelgazpromParser(BaseParser):
 
     def get_all_currencies(self,
                            date: datetime.date=None) -> Sequence[Currency]:
-        # TODO: check if string is supplied as date
         if date is None:
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
@@ -103,14 +102,14 @@ class BelgazpromParser(BaseParser):
     def get_currency_for_diff_date(self,
                                    diff_days: int,
                                    currency: str="USD") -> Currency:
-        former_date = datetime.date.today() - datetime.timedelta(days=diff_days)
+        delta = datetime.timedelta(days=diff_days)
+        former_date = datetime.date.today() - delta
         currency = self.get_currency(currency, date=former_date)
         return currency
 
     def get_currency(self,
                      currency_name: str="USD",
                      date: datetime.date=None) -> Currency:
-        # TODO: requires heavy optimization or caching
         if date is None:
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"

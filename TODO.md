@@ -17,8 +17,8 @@
 * ~~On big date differences dates on the plot are hardly distinctable~~
 * ~~Think about inline functionality of any kind (pass exchange rates for the given currency to the chat?)~~
 * ~~Add functionality to temporarily disable parser~~
+* ~~add **/compare** <currency name> see data about currency from diffrent bank (**/best** is implemented)~~
 * Check and update Debian deployment
-* add **/compare** <currency name> see data about currency from diffrent bank
 * Setup mongodb config, create admin and normal user (dat feel when mongo's not hipster enough)
 * Rotate image cache to not overflow disk (say limit to 500 mb)
 * User bank selection cache should be persistent
