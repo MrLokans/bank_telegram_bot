@@ -7,7 +7,9 @@ import functools
 from typing import Mapping, Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import gettext
 from gettext import gettext as _
+
 
 import telegram
 from telegram import (
@@ -43,6 +45,9 @@ USER_BANK_SELECTION_CACHE = {}
 
 BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])
 
+ru = gettext.translation('telegrambot',
+                         localedir=LOCALIZATION_PATH,
+                         languages=['ru'])
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
@@ -93,7 +98,9 @@ def unknown(bot, update):
 
 
 def error(bot, update, error):
-    logger.warn(_('Update "%s" caused error "%s"' % (update, error)))
+    msg = _('Update "{update}" caused error "{err_msg}"').format(update=update,
+                                                                 error=error)
+    logger.warn(msg)
 
 
 def parse_args(bot, update, args) -> Mapping[str, Any]:
@@ -143,7 +150,7 @@ def course(bot, update, args, **kwargs):
         currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
-                        text=_("Currencies: \n{}").format(currencies_text_value),
+                        text=_("Currencies: \n{curs}").format(curs=currencies_text_value),
                         parse_mode=ParseMode.HTML)
 
         return

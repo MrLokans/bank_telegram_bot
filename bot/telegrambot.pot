@@ -1,0 +1,77 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+
+#: telegrambot.py:87
+msgid "I'm a bot, please talk to me!"
+msgstr ""
+
+#: telegrambot.py:92
+msgid "Sorry, I didn't understand that command."
+msgstr ""
+
+#: telegrambot.py:96
+msgid "Update \"{update}\" caused error \"{err_msg}\""
+msgstr ""
+
+#: telegrambot.py:143
+msgid "Buy\tSell"
+msgstr ""
+
+#: telegrambot.py:148
+msgid ""
+"Currencies: \n"
+"{curs}"
+msgstr ""
+
+#: telegrambot.py:161 telegrambot.py:171
+msgid "Unknown currency: {}"
+msgstr ""
+
+#: telegrambot.py:256
+msgid ""
+"Use following commands:\n"
+"/course -d <days ago> -c <currency name>  - display current exchange rate for the\n"
+"given currency or for all available currencies.\n"
+"/graph -d <days ago> -c <currency name> - plot currency exchange\n"
+"rate dynamincs for the specified period of time\n"
+"/banks - list names of currently supported banks.\n"
+"/set <bank_name> - sets default bank name for all of the operations\n"
+"/best -c <cur_name> -d <date diff> - best exchange rate for the given currency\n"
+msgstr ""
+
+#: telegrambot.py:282
+msgid ""
+"Supported banks: \n"
+"{}"
+msgstr ""
+
+#: telegrambot.py:297
+msgid "Your currently selected bank is {}"
+msgstr ""
+
+#: telegrambot.py:302
+msgid "Incorrect number of arguments, please specify bank name"
+msgstr ""
+
+#: telegrambot.py:312
+msgid "Incorrect bank name specified, available names are: {}"
+msgstr ""
+
+#: telegrambot.py:317
+msgid "Default bank succesfully set to {}"
+msgstr ""
+
+#: telegrambot.py:355 telegrambot.py:394
+msgid "Buy {}: <b>{}</b> - {}"
+msgstr ""
+
+#: telegrambot.py:360 telegrambot.py:399
+msgid "Sell {}: <b>{}</b> - {}"
+msgstr ""
+
+#: telegrambot.py:408
+msgid "Best rate"
+msgstr ""
+

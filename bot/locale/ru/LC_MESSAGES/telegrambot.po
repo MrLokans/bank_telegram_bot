@@ -1,0 +1,102 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: ru\n"
+
+#: telegrambot.py:87
+msgid "I'm a bot, please talk to me!"
+msgstr "Привет, я бот, пожалуйста, поговори со мной!"
+
+#: telegrambot.py:92
+msgid "Sorry, I didn't understand that command."
+msgstr "К сожалению, я не знаю такой команды."
+
+#: telegrambot.py:96
+msgid "Update \"{update}\" caused error \"{err_msg}\""
+msgstr "Апдейт \"{update}\" вызвал ошибку \"{err_msg}\""
+
+#: telegrambot.py:143
+msgid "Buy\tSell"
+msgstr "Купля\tПродажа"
+
+#: telegrambot.py:148
+msgid ""
+"Currencies: \n"
+"{curs}"
+msgstr ""
+"Валюты: \n"
+"{curs}"
+
+#: telegrambot.py:161 telegrambot.py:171
+msgid "Unknown currency: {}"
+msgstr "Неизвестная валюта: {}"
+
+#: telegrambot.py:256
+msgid ""
+"Use following commands:\n"
+"/course -d <days ago> -c <currency name>  - display current exchange rate "
+"for the\n"
+"given currency or for all available currencies.\n"
+"/graph -d <days ago> -c <currency name> - plot currency exchange\n"
+"rate dynamincs for the specified period of time\n"
+"/banks - list names of currently supported banks.\n"
+"/set <bank_name> - sets default bank name for all of the operations\n"
+"/best -c <cur_name> -d <date diff> - best exchange rate for the given "
+"currency\n"
+msgstr ""
+"Используйте следующие команды:\n"
+"/course -d <дней_назад> -c <валюта>  - отобразить текущий курс обмена\n"
+"для указанной валюты или длявсех валют.\n"
+"/graph -d <дней_назад> -c <валюта> - нарисовать график обмена валютn\n"
+"с динамикой за указанный период времени.\n"
+"/banks - список поддерживаемых банков.\n"
+"/set <имя_банка> - установить банк по умолчанию для всех операций\n"
+"/best -c <валюта> -d <дней_назад> - лучший курс обмена за указанное время "
+"(сегодня по умолчанию)\n"
+
+#: telegrambot.py:282
+msgid ""
+"Supported banks: \n"
+"{}"
+msgstr ""
+"Поддерживаемые банки: \n"
+"{}"
+
+#: telegrambot.py:297
+msgid "Your currently selected bank is {}"
+msgstr "Вы выбрали банк {}"
+
+#: telegrambot.py:302
+msgid "Incorrect number of arguments, please specify bank name"
+msgstr ""
+"Неправильное количество параметров, пожалйста, укажите название банка"
+
+#: telegrambot.py:312
+msgid "Incorrect bank name specified, available names are: {}"
+msgstr "Указано неправильное имя банка, доступны следующие имена: {}"
+
+#: telegrambot.py:317
+msgid "Default bank succesfully set to {}"
+msgstr "Банк по умолчанию установлен на {}"
+
+#: telegrambot.py:355 telegrambot.py:394
+msgid "Buy {}: <b>{}</b> - {}"
+msgstr "Купля {}: <b>{}</b> - {}"
+
+#: telegrambot.py:360 telegrambot.py:399
+msgid "Sell {}: <b>{}</b> - {}"
+msgstr "Продажа {}: <b>{}</b> - {}"
+
+#: telegrambot.py:408
+msgid "Best rate"
+msgstr "Лучший курс"
