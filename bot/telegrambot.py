@@ -7,6 +7,7 @@ import functools
 from typing import Mapping, Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from gettext import gettext as _
 
 import telegram
 from telegram import (
@@ -27,7 +28,12 @@ from telegram.ext.dispatcher import run_async
 from bot_exceptions import BotArgumentParsingError, BotLoggedError
 import plotting
 import utils
-from settings import logger, DEFAULT_CURRENCY, DEFAULT_PARSER_NAME
+from settings import (
+    DEFAULT_CURRENCY,
+    DEFAULT_PARSER_NAME,
+    LOCALIZATION_PATH,
+    logger
+)
 
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
@@ -78,16 +84,16 @@ def set_user_default_bank(user_id: str,
 
 def start(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
-                    text="I'm a bot, please talk to me!")
+                    text=_("I'm a bot, please talk to me!"))
 
 
 def unknown(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
-                    text="Sorry, I didn't understand that command.")
+                    text=_("Sorry, I didn't understand that command."))
 
 
 def error(bot, update, error):
-    logger.warn('Update "%s" caused error "%s"' % (update, error))
+    logger.warn(_('Update "%s" caused error "%s"' % (update, error)))
 
 
 def parse_args(bot, update, args) -> Mapping[str, Any]:
@@ -132,12 +138,12 @@ def course(bot, update, args, **kwargs):
                                                             x.buy,
                                                             x.sell)
                             for x in all_currencies]
-        header = ["Покупка\tПродажа", ]
+        header = [_("Buy\tSell"), ]
 
         currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
-                        text="Currencies: \n{}".format(currencies_text_value),
+                        text=_("Currencies: \n{}").format(currencies_text_value),
                         parse_mode=ParseMode.HTML)
 
         return
@@ -150,7 +156,7 @@ def course(bot, update, args, **kwargs):
 
         if cur.name == 'NoValue':
             bot.sendMessage(chat_id=chat_id,
-                            text="Unknown currency: {}".format(args[0]))
+                            text=_("Unknown currency: {}").format(args[0]))
             return
         else:
             text = "'<b>{:<5}</b>{:<8}{:<8}'".format(cur.iso + ":",
@@ -160,7 +166,7 @@ def course(bot, update, args, **kwargs):
                             text=text)
             return
     else:
-        text = "Unknown currency: {}".format(currency)
+        text = _("Unknown currency: {}").format(currency)
         bot.sendMessage(chat_id=chat_id,
                         text=text,
                         parse_mode=ParseMode.HTML)
@@ -245,7 +251,7 @@ def show_currency_graph(bot, update, args, **kwargs):
 @log_exceptions
 def help_user(bot, update):
     chat_id = update.message.chat_id
-    help_message = """Use following commands:
+    help_message = _("""Use following commands:
 /course -d <days ago> -c <currency name>  - display current exchange rate for the
 given currency or for all available currencies.
 /graph -d <days ago> -c <currency name> - plot currency exchange
@@ -253,7 +259,7 @@ rate dynamincs for the specified period of time
 /banks - list names of currently supported banks.
 /set <bank_name> - sets default bank name for all of the operations
 /best -c <cur_name> -d <date diff> - best exchange rate for the given currency
-"""
+""")
     bot.sendMessage(chat_id=chat_id,
                     text=help_message)
 
@@ -271,7 +277,7 @@ def list_banks(bot, update):
         for parser_cls in parser_classes
     )
 
-    msg = "Current banks are now supported: \n{}".format(bank_names)
+    msg = _("Supported banks: \n{}").format(bank_names)
     bot.sendMessage(chat_id=chat_id,
                     text=msg)
     return
@@ -286,12 +292,12 @@ def set_default_bank(bot, update, args):
         # Send user data about the bank he is currently associated with
         if len(args) == 0:
             default_bank = get_user_selected_bank(user_id)
-            msg = "Your currently selected bank is {}".format(default_bank)
+            msg = _("Your currently selected bank is {}").format(default_bank)
             bot.sendMessage(chat_id=chat_id,
                             text=msg)
             return
         else:
-            msg = "Incorrect number of arguments, please specify bank name"
+            msg = _("Incorrect number of arguments, please specify bank name")
             bot.sendMessage(chat_id=chat_id,
                             text=msg)
             return
@@ -301,12 +307,12 @@ def set_default_bank(bot, update, args):
     bank_names_lower = set(map(lambda x: x.lower(), available_names))
     if bank_name.lower() not in bank_names_lower:
         bank_names = ", ".join(available_names)
-        msg = "Incorrect bank name specified, available names are: {}"
+        msg = _("Incorrect bank name specified, available names are: {}")
         bot.sendMessage(chat_id=chat_id,
                         text=msg.format(bank_names))
         return
     set_user_default_bank(user_id, bank_name)
-    msg = "Default bank succesfully set to {}"
+    msg = _("Default bank succesfully set to {}")
     bot.sendMessage(chat_id=chat_id,
                     text=msg.format(bank_name))
 
@@ -344,12 +350,12 @@ def best_course(bot, update, args, **kwargs):
 
     best = get_best_currencies(currency)
 
-    buy_msg = "Купля {}: <b>{}</b> - {}"
+    buy_msg = _("Buy {}: <b>{}</b> - {}")
     buy_msg = buy_msg.format(best["buy"][1].iso,
                              best["buy"][0],
                              best["buy"][1].buy)
     # TODO: add allignment
-    sell_msg = "Продажа {}: <b>{}</b> - {}"
+    sell_msg = _("Sell {}: <b>{}</b> - {}")
     sell_msg = sell_msg.format(best["sell"][1].iso,
                                best["sell"][0],
                                best["sell"][1].sell)
@@ -383,12 +389,12 @@ def inline_rate(bot, update):
             if currency.upper() not in parser.allowed_currencies:
                 continue
             best = get_best_currencies(currency)
-            buy_msg = "Купля {}: <b>{}</b> - {}"
+            buy_msg = _("Buy {}: <b>{}</b> - {}")
             buy_msg = buy_msg.format(best["buy"][1].iso,
                                      best["buy"][0],
                                      best["buy"][1].buy)
             # TODO: add allignment
-            sell_msg = "Продажа {}: <b>{}</b> - {}"
+            sell_msg = _("Sell {}: <b>{}</b> - {}")
             sell_msg = sell_msg.format(best["sell"][1].iso,
                                        best["sell"][0],
                                        best["sell"][1].sell)
@@ -397,7 +403,7 @@ def inline_rate(bot, update):
             res = InputTextMessageContent(msg,
                                           parse_mode=ParseMode.HTML)
             result = InlineQueryResultArticle(id=uuid4(),
-                                              title="Лучший курс",
+                                              title=_("Best rate"),
                                               input_message_content=res)
 
             bot.answerInlineQuery(update.inline_query.id, [result])
