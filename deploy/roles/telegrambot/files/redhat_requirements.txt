@@ -1,5 +1,5 @@
 pymongo==3.2.2
-matplotlib
+matplotlib==1.5.1
 beautifulsoup4==4.4.1
 pyparsing==2.1.1
 python-dateutil==2.5.2
@@ -7,6 +7,7 @@ python-telegram-bot==4.0.3
 pytz==2016.3
 requests==2.9.1
 seaborn==0.7.0
+scipy==0.17.0
 pandas==0.18.0
-lxml
+lxml==3.6.0
 typing
