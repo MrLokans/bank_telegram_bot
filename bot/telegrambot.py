@@ -8,7 +8,6 @@ from typing import Mapping, Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import gettext
-from gettext import gettext as _
 
 
 import telegram
@@ -45,9 +44,12 @@ USER_BANK_SELECTION_CACHE = {}
 
 BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])
 
-ru = gettext.translation('telegrambot',
-                         localedir=LOCALIZATION_PATH,
-                         languages=['ru'])
+lang = gettext.translation('telegrambot',
+                           localedir=LOCALIZATION_PATH,
+                           languages=['ru_RU'])
+lang.install()
+
+_ = lang.gettext
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
