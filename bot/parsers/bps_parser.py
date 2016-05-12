@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 
 from cache.mongo import MongoCurrencyCache
 from currency import Currency
+from bot_exceptions import BotLoggedError
 from settings import LOGGER_NAME
 
 CURRENCY_REGEX = re.compile(r'\d?\s*(?P<value>[A-Za-z]+)')
@@ -61,7 +62,7 @@ class BPSParser(object):
         match = CURRENCY_REGEX.match(cur)
         if match:
             return match.groupdict()["value"]
-        raise ValueError("Incorrect currency supplied: {}".format(cur))
+        raise BotLoggedError("Incorrect currency supplied: {}".format(cur))
 
     def get_all_currencies(self, date=None) -> Set[Currency]:
         """Get all available currencies for the given date
@@ -82,7 +83,7 @@ class BPSParser(object):
         if currency_name.upper() not in BPSParser.allowed_currencies:
             allowed = ", ".join(BPSParser.allowed_currencies)
             msg = "Incorrect currency '{}', allowed values: {}"
-            raise ValueError(msg.format(currency_name, allowed))
+            raise BotLoggedError(msg.format(currency_name, allowed))
 
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:

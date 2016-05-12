@@ -3,6 +3,7 @@
 import os
 from uuid import uuid4
 import logging
+import functools
 from typing import Mapping, Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,7 +24,7 @@ from telegram.ext import (
 from telegram.ext.dispatcher import run_async
 
 
-from bot_exceptions import BotArgumentParsingError
+from bot_exceptions import BotArgumentParsingError, BotLoggedError
 import plotting
 import utils
 from settings import logger, DEFAULT_CURRENCY, DEFAULT_PARSER_NAME
@@ -41,6 +42,21 @@ api_token = os.environ.get(API_ENV_NAME, '')
 
 if not api_token:
     raise ValueError("No API token specified.")
+
+
+def log_exceptions(bot_func):
+    @functools.wraps(bot_func)
+    def wrapper(bot, update, *args, **kwargs):
+        try:
+            bot_func(bot, update, *args, **kwargs)
+        except BotLoggedError as e:
+            chat_id = update.message.chat_id
+            msg = str(e)
+            bot.sendMessage(chat_id=chat_id,
+                            text=msg,
+                            parse_mode=ParseMode.HTML)
+            return
+    return wrapper
 
 
 def get_user_selected_bank(user_id: str,
@@ -87,6 +103,7 @@ def parse_args(bot, update, args) -> Mapping[str, Any]:
 
 
 @run_async
+@log_exceptions
 def course(bot, update, args, **kwargs):
     chat_id = update.message.chat_id
 
@@ -155,6 +172,7 @@ def result_date_saver(parser, currency, date):
 
 
 @run_async
+@log_exceptions
 def show_currency_graph(bot, update, args, **kwargs):
     """Sends user currency graph changes for the specified period of time.
     E.g. user wants to get exchange rates for the US currency for 10 last days,
@@ -224,6 +242,7 @@ def show_currency_graph(bot, update, args, **kwargs):
     return
 
 
+@log_exceptions
 def help_user(bot, update):
     chat_id = update.message.chat_id
     help_message = """Use following commands:
@@ -241,6 +260,7 @@ rate dynamincs for the specified period of time
     return
 
 
+@log_exceptions
 def list_banks(bot, update):
     """Show user names of banks that are supported"""
     chat_id = update.message.chat_id
@@ -257,6 +277,7 @@ def list_banks(bot, update):
     return
 
 
+@log_exceptions
 def set_default_bank(bot, update, args):
     chat_id = update.message.chat_id
     user_id = str(update.message.from_user.id)
@@ -290,6 +311,7 @@ def set_default_bank(bot, update, args):
                     text=msg.format(bank_name))
 
 
+@log_exceptions
 def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
     """Get best sell and buy rates for available banks"""
     parser_classes = utils.get_parser_classes()
@@ -307,6 +329,7 @@ def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
 
 
 @run_async
+@log_exceptions
 def best_course(bot, update, args, **kwargs):
     """Gets the best course rate for available banks."""
     chat_id = update.message.chat_id

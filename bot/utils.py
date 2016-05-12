@@ -14,7 +14,7 @@ from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
 import settings
 
-from bot_exceptions import BotArgumentParsingError
+from bot_exceptions import BotLoggedError
 from currency import Currency
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
@@ -61,13 +61,13 @@ def preferences_from_args(args: Sequence[str]) -> Mapping[str, Any]:
                     msg = """\
 Wrong day diff format, please specifiy integer number in range 2-2400
 """
-                    raise BotArgumentParsingError(msg)
+                    raise BotLoggedError(msg)
 
                 if days_diff < 2 or days_diff > 2400:
                     msg = """\
 Wrong day diff format, please specify integer number in range 2-2400
 """
-                    raise BotArgumentParsingError(msg)
+                    raise BotLoggedError(msg)
                 preferences['days_ago'] = days_diff
         if arg == "-c":
             if i < len(args) - 1:

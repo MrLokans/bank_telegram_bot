@@ -6,6 +6,7 @@ import requests
 
 from cache.mongo import MongoCurrencyCache
 from currency import Currency
+from bot_exceptions import BotLoggedError
 from settings import LOGGER_NAME
 
 
@@ -77,14 +78,13 @@ class PriorbankParser(object):
         if currency_name.upper() not in PriorbankParser.allowed_currencies:
             allowed = ", ".join(PriorbankParser.allowed_currencies)
             msg = "Incorrect currency '{}', allowed values: {}"
-            raise ValueError(msg.format(currency_name, allowed))
+            raise BotLoggedError(msg.format(currency_name, allowed))
 
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
                 return currency
         return Currency.empty_currency()
-        raise NotImplementedError
 
 if __name__ == '__main__':
     parser = PriorbankParser()
