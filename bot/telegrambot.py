@@ -326,7 +326,6 @@ def set_default_bank(bot, update, args):
                     text=msg.format(bank_name))
 
 
-@log_exceptions
 def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
     """Get best sell and buy rates for available banks"""
     parser_classes = utils.get_parser_classes()
