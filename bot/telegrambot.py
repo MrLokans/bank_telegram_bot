@@ -27,6 +27,7 @@ from telegram.ext.dispatcher import run_async
 
 
 from bot_exceptions import BotArgumentParsingError, BotLoggedError
+from currency import Currency
 import plotting
 import utils
 from settings import (
@@ -117,6 +118,15 @@ def parse_args(bot, update, args) -> Mapping[str, Any]:
     return preferences
 
 
+def format_currency_string(cur: Currency) -> str:
+    """Formats currency to be sent to user"""
+    format_s = '<b>{:<5}</b>{:<8}{:<8}'
+    s = format_s.format(cur.iso + ":",
+                        '-' if cur.buy is None else cur.buy,
+                        '-' if cur.sell is None else cur.sell)
+    return s
+
+
 @run_async
 @log_exceptions
 def course(bot, update, args, **kwargs):
@@ -143,11 +153,9 @@ def course(bot, update, args, **kwargs):
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
 
         all_currencies = utils.sort_currencies(all_currencies)
-        displayed_values = ['<b>{:<5}</b>{:<8}{:<8}'.format(x.iso + ":",
-                                                            x.buy,
-                                                            x.sell)
+        displayed_values = [format_currency_string(x)
                             for x in all_currencies]
-        header = [_("Buy\tSell"), ]
+        header = [_("\tBuy\tSell"), ]
 
         currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
@@ -168,11 +176,10 @@ def course(bot, update, args, **kwargs):
                             text=_("Unknown currency: {}").format(args[0]))
             return
         else:
-            text = "'<b>{:<5}</b>{:<8}{:<8}'".format(cur.iso + ":",
-                                                     cur.sell,
-                                                     cur.buy)
+            text = format_currency_string(cur)
             bot.sendMessage(chat_id=chat_id,
-                            text=text)
+                            text=text,
+                            parse_mode=ParseMode.HTML)
             return
     else:
         text = _("Unknown currency: {}").format(currency)

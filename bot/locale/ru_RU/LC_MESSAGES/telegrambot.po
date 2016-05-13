@@ -31,7 +31,7 @@ msgstr "Апдейт \"{update}\" вызвал ошибку \"{err_msg}\""
 
 #: telegrambot.py:143
 msgid "Buy\tSell"
-msgstr "Купля\tПродажа"
+msgstr "\tКупля\tПродажа"
 
 #: telegrambot.py:148
 msgid ""

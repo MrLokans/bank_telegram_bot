@@ -2,37 +2,33 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#: telegrambot.py:49
-msgid "Test Translation"
-msgstr ""
-
-#: telegrambot.py:87
+#: telegrambot.py:95
 msgid "I'm a bot, please talk to me!"
 msgstr ""
 
-#: telegrambot.py:92
+#: telegrambot.py:100
 msgid "Sorry, I didn't understand that command."
 msgstr ""
 
-#: telegrambot.py:96
+#: telegrambot.py:104
 msgid "Update \"{update}\" caused error \"{err_msg}\""
 msgstr ""
 
-#: telegrambot.py:143
-msgid "Buy\tSell"
+#: telegrambot.py:158
+msgid "\tBuy\tSell"
 msgstr ""
 
-#: telegrambot.py:148
+#: telegrambot.py:163
 msgid ""
 "Currencies: \n"
 "{curs}"
 msgstr ""
 
-#: telegrambot.py:161 telegrambot.py:171
+#: telegrambot.py:176 telegrambot.py:185
 msgid "Unknown currency: {}"
 msgstr ""
 
-#: telegrambot.py:256
+#: telegrambot.py:270
 msgid ""
 "Use following commands:\n"
 "/course -d <days ago> -c <currency name>  - display current exchange rate for the\n"
@@ -44,37 +40,37 @@ msgid ""
 "/best -c <cur_name> -d <date diff> - best exchange rate for the given currency\n"
 msgstr ""
 
-#: telegrambot.py:282
+#: telegrambot.py:296
 msgid ""
 "Supported banks: \n"
 "{}"
 msgstr ""
 
-#: telegrambot.py:297
+#: telegrambot.py:311
 msgid "Your currently selected bank is {}"
 msgstr ""
 
-#: telegrambot.py:302
+#: telegrambot.py:316
 msgid "Incorrect number of arguments, please specify bank name"
 msgstr ""
 
-#: telegrambot.py:312
+#: telegrambot.py:326
 msgid "Incorrect bank name specified, available names are: {}"
 msgstr ""
 
-#: telegrambot.py:317
+#: telegrambot.py:331
 msgid "Default bank succesfully set to {}"
 msgstr ""
 
-#: telegrambot.py:355 telegrambot.py:394
+#: telegrambot.py:368 telegrambot.py:407
 msgid "Buy {}: <b>{}</b> - {}"
 msgstr ""
 
-#: telegrambot.py:360 telegrambot.py:399
+#: telegrambot.py:373 telegrambot.py:412
 msgid "Sell {}: <b>{}</b> - {}"
 msgstr ""
 
-#: telegrambot.py:408
+#: telegrambot.py:421
 msgid "Best rate"
 msgstr ""
 
