@@ -56,7 +56,7 @@
   - name: Copy supervisord telegram config file
     template:
       src: templates/telegram_botd.conf
-      dest: /etc/telegram_botd.conf
+      dest: /etc/supervisord.d/telegram_botd.conf
 
 
   - name: Ensure former installation is removed
