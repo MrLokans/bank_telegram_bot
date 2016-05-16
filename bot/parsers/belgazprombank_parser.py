@@ -110,7 +110,8 @@ class BelgazpromParser(BaseParser):
                         buy=float(table_cols[2].find(text=True)))
 
     def get_all_currencies(self,
-                           date: datetime.date=None) -> Sequence[Currency]:
+                           date: datetime.date=None,
+                           use_cache=True) -> Sequence[Currency]:
         if date is None:
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
@@ -123,7 +124,7 @@ class BelgazpromParser(BaseParser):
         str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
 
         is_today = date == datetime.date.today()
-        if not is_today:
+        if not is_today and use_cache:
             for currency in currencies:
                 self._cache.cache_currency(self.short_name,
                                            currency,
@@ -141,7 +142,8 @@ class BelgazpromParser(BaseParser):
 
     def get_currency(self,
                      currency_name: str="USD",
-                     date: datetime.date=None) -> Currency:
+                     date: datetime.date=None,
+                     use_cache: bool=True) -> Currency:
         if date is None:
             date = datetime.date.today()
         assert isinstance(date, datetime.date), "Incorrect date supplied"
@@ -163,7 +165,7 @@ class BelgazpromParser(BaseParser):
 
         for cur in currencies:
             if currency_name.upper() == cur.iso:
-                if not is_today:
+                if not is_today and use_cache:
                     self._cache.cache_currency(self.short_name, cur, str_date)
                 return cur
         else:

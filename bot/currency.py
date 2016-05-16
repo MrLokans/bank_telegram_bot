@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Dict
 
 
 class Currency(object):
@@ -36,3 +36,15 @@ class Currency(object):
     def empty_currency(cls):
         return Currency("NoValue", "", 0, 0)
 
+    def to_dict(self) -> Dict[str, Union[str, float, int]]:
+        currency_dict = {
+            "name": self.name,
+            "iso": self.iso,
+            "buy": self.buy,
+            "sell": self.sell
+        }
+        return currency_dict
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Union[str, float, int]]):
+        return cls(**d)
