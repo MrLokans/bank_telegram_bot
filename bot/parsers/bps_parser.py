@@ -6,7 +6,7 @@ from typing import Sequence, Set
 import requests
 from bs4 import BeautifulSoup
 
-from cache.mongo import MongoCurrencyCache
+from cache import MongoCurrencyCache, StrCacheAdapter
 from currency import Currency
 from bot_exceptions import BotLoggedError
 from settings import LOGGER_NAME
@@ -22,10 +22,11 @@ class BPSParser(object):
     short_name = 'bpsb'
     allowed_currencies = set(('USD', 'EUR', 'RUB', 'UAH', 'PLN', 'GBP', 'CHF'))
     BASE_URL = "http://www.bps-sberbank.by/43257F17004E948D/currency_rates"
-    DATA_FORMAT = "%Y.%m.%d"
+    DATE_FORMAT = "%Y.%m.%d"
 
     def __init__(self, parser="lxml", *args, **kwargs):
-        self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+        mongo_cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+        self.cache = StrCacheAdapter(mongo_cache, Currency)
         self._parser = parser
 
     @classmethod
@@ -33,7 +34,7 @@ class BPSParser(object):
         if date is None:
             date = datetime.date.today()
 
-        str_date = date.strftime(cls.DATA_FORMAT)
+        str_date = date.strftime(cls.DATE_FORMAT)
         payload = {"openForm": 1, "date": str_date}
         r = requests.get(cls.BASE_URL, params=payload)
         return r.text
@@ -64,7 +65,7 @@ class BPSParser(object):
             return match.groupdict()["value"]
         raise BotLoggedError("Incorrect currency supplied: {}".format(cur))
 
-    def get_all_currencies(self, date=None) -> Set[Currency]:
+    def get_all_currencies(self, date=None, use_cache=True) -> Set[Currency]:
         """Get all available currencies for the given date
         (both sell and purchase)"""
         # FIXME: add caching
@@ -73,9 +74,19 @@ class BPSParser(object):
         response = self._response_for_date(date)
         soup = self._soup_from_response(response)
         rows = self.__rate_rows(soup)
+
+        is_today = date == datetime.date.today()
+        str_date = date.strftime(BPSParser.DATE_FORMAT)
+
+        currencies = set([self._currency_from_row(row) for row in rows])
+        if not is_today and use_cache:
+            for currency in currencies:
+                self.cache.cache_currency(self.short_name,
+                                          currency,
+                                          str_date)
         return set([self._currency_from_row(row) for row in rows])
 
-    def get_currency(self, currency_name="USD", date=None):
+    def get_currency(self, currency_name="USD", date=None, use_cache=True):
         """Get currency data for the given currency name"""
         if date is None:
             date = datetime.date.today()
@@ -85,9 +96,24 @@ class BPSParser(object):
             msg = "Incorrect currency '{}', allowed values: {}"
             raise BotLoggedError(msg.format(currency_name, allowed))
 
+        is_today = date == datetime.date.today()
+        str_date = date.strftime(BPSParser.DATE_FORMAT)
+
+        cached_item = None
+        if not is_today:
+            cached_item = self.cache.get_cached_value(self.short_name,
+                                                      currency_name,
+                                                      str_date)
+        if cached_item:
+            return cached_item
+
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
+                if not is_today and use_cache:
+                    self.cache.cache_currency(self.short_name,
+                                              currency,
+                                              str_date)
                 return currency
         return Currency.empty_currency()
 
