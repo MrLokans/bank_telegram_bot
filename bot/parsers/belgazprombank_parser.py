@@ -5,10 +5,38 @@ from typing import Sequence
 import requests
 from bs4 import BeautifulSoup
 
-from cache.mongo import MongoCurrencyCache
+from cache import MongoCurrencyCache
 from currency import Currency
 from settings import LOGGER_NAME, logger
 from .base import BaseParser
+
+
+class StrCacheAdapter(object):
+
+    def __init__(self, cache):
+        self.cache = cache
+
+    def get_cached_value(self, bank_short_name: str,
+                         currency_name: str,
+                         str_date: str) -> Currency:
+        search_key = "{}_{}_{}".format(bank_short_name.lower(),
+                                       currency_name.lower(),
+                                       str_date.lower())
+        str_result = self.cache.get(search_key)
+        if str_result is None:
+            return None
+        buy, sell = str_result.split(",")
+        return Currency(currency_name, currency_name, float(buy), float(sell))
+
+    def cache_currency(self,
+                       bank_short_name: str,
+                       cur_instance: Currency,
+                       str_date: str) -> None:
+        search_key = "{}_{}_{}".format(bank_short_name.lower(),
+                                       cur_instance.iso.lower(),
+                                       str_date.lower())
+        str_value = ",".join([str(cur_instance.buy), str(cur_instance.sell)])
+        self.cache.put(search_key, str_value)
 
 
 class BelgazpromParser(BaseParser):
@@ -24,7 +52,8 @@ class BelgazpromParser(BaseParser):
     def __init__(self, parser="lxml", *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
-        self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+        # self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+        self._cache = StrCacheAdapter(MongoCurrencyCache())
         self._parser = parser
 
     def __get_response_for_the_date(self,
@@ -93,6 +122,7 @@ class BelgazpromParser(BaseParser):
         is_today = date == datetime.date.today()
         if not is_today:
             for currency in currencies:
+                print("CACHE!!")
                 self._cache.cache_currency(self.short_name,
                                            currency,
                                            str_date)

@@ -3,14 +3,16 @@
 import logging
 import typing
 
-Cur = typing.TypeVar('Cur')
-
 import pymongo
 
+
+from cache import AbstractCache
 from cache import mongo_settings as settings
 
+Cur = typing.TypeVar('Cur')
 
-class MongoCurrencyCache(object):
+
+class MongoCurrencyCache(AbstractCache):
     def __init__(self, currency_cls, logger_name):
         self.server_delay = 10
         self.is_storage_available = False
@@ -38,48 +40,13 @@ class MongoCurrencyCache(object):
                                              settings.MONGO_PASSWORD))
             self.is_storage_available = False
 
-    def get_cached_value(self,
-                         bank_name: str,
-                         cur_name: str,
-                         date_str: str) -> Cur:
-        """Gets currency object from the cache.
-        If currency is not present - returns None"""
+    def get(self, key, key_type=None):
+        item = self._collection.find_one({"currency_key": key})
+        return item["value"]
 
-        if not self.is_storage_available:
-            msg = "Currency requested from cache but cache is unavailable."
-            self.logger.info(msg)
-            return None
-        search_key = "{}_{}_{}".format(bank_name.lower(),
-                                       cur_name.lower(),
-                                       date_str.lower())
-        item = self._collection.find_one({"currency_key": search_key})
-        if item:
-            item = self.currency_cls(cur_name.upper(),
-                                     cur_name.upper(),
-                                     item['sell_value'],
-                                     item['buy_value'])
-            return item
-        return None
-
-    def cache_currency(self,
-                       bank_name: str,
-                       cur_instance: Cur,
-                       date_str: str) -> None:
-        """Puts given currency into the cache"""
-        dbg_msg = "Trying to cache currency {}-{}-{} in cache.".format(
-            bank_name, cur_instance.sell, date_str
-        )
-        self.logger.debug(dbg_msg)
-
-        if not self.is_storage_available:
-            self.logger.info("Cache is unavailable.")
-            return
-        save_key = "{}_{}_{}".format(bank_name.lower(),
-                                     cur_instance.iso.lower(),
-                                     date_str.lower())
+    def put(self, key, value, key_type=None, key_value=None):
         item = {
-            "currency_key": save_key,
-            "buy_value": cur_instance.buy,
-            "sell_value": cur_instance.sell
+            "currency_key": key,
+            "value": value
         }
         self._collection.insert(item)
