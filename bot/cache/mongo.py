@@ -42,7 +42,9 @@ class MongoCurrencyCache(AbstractCache):
 
     def get(self, key, key_type=None):
         item = self._collection.find_one({"currency_key": key})
-        return item["value"]
+        if item is not None:
+            return item["value"]
+        return None
 
     def put(self, key, value, key_type=None, key_value=None):
         item = {

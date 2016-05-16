@@ -26,7 +26,11 @@ class StrCacheAdapter(object):
         if str_result is None:
             return None
         buy, sell = str_result.split(",")
-        return Currency(currency_name, currency_name, float(buy), float(sell))
+        c = Currency(currency_name,
+                     currency_name,
+                     buy=float(buy),
+                     sell=float(sell))
+        return c
 
     def cache_currency(self,
                        bank_short_name: str,
@@ -52,8 +56,7 @@ class BelgazpromParser(BaseParser):
     def __init__(self, parser="lxml", *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
-        # self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
-        self._cache = StrCacheAdapter(MongoCurrencyCache())
+        self._cache = StrCacheAdapter(MongoCurrencyCache(Currency, LOGGER_NAME))
         self._parser = parser
 
     def __get_response_for_the_date(self,
@@ -122,7 +125,6 @@ class BelgazpromParser(BaseParser):
         is_today = date == datetime.date.today()
         if not is_today:
             for currency in currencies:
-                print("CACHE!!")
                 self._cache.cache_currency(self.short_name,
                                            currency,
                                            str_date)
