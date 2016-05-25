@@ -1,5 +1,6 @@
 # coding: utf-8
 from abc import ABCMeta, abstractmethod
+import datetime
 
 
 class BaseParser(object, metaclass=ABCMeta):
@@ -8,6 +9,7 @@ class BaseParser(object, metaclass=ABCMeta):
     allowed_currencies = tuple()
     name = 'Base Parser'
     short_name = 'base'
+    DENOMINATION_DATE = datetime.date(year=2016, month=6, day=1)
 
     @abstractmethod
     def get_all_currencies(self, date=None):

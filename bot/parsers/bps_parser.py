@@ -10,11 +10,12 @@ from cache import MongoCurrencyCache, StrCacheAdapter
 from currency import Currency
 from bot_exceptions import BotLoggedError
 from settings import LOGGER_NAME
+from parsers.base import BaseParser
 
 CURRENCY_REGEX = re.compile(r'\d?\s*(?P<value>[A-Za-z]+)')
 
 
-class BPSParser(object):
+class BPSParser(BaseParser):
 
     is_active = True
     allowed_currencies = tuple()
@@ -69,34 +70,43 @@ class BPSParser(object):
         """Get all available currencies for the given date
         (both sell and purchase)"""
         # FIXME: add caching
+        today = datetime.date.today()
         if date is None:
-            date = datetime.date.today()
+            date = today
         response = self._response_for_date(date)
         soup = self._soup_from_response(response)
         rows = self.__rate_rows(soup)
 
-        is_today = date == datetime.date.today()
+        is_today = date == today
         str_date = date.strftime(BPSParser.DATE_FORMAT)
 
         currencies = set([self._currency_from_row(row) for row in rows])
+        if today < self.DENOMINATION_DATE:
+            for c in currencies:
+                c.multiplier = 10000
+        else:
+            for c in currencies:
+                c.multiplier = 1
+
         if not is_today and use_cache:
             for currency in currencies:
                 self.cache.cache_currency(self.short_name,
                                           currency,
                                           str_date)
-        return set([self._currency_from_row(row) for row in rows])
+        return currencies
 
     def get_currency(self, currency_name="USD", date=None, use_cache=True):
         """Get currency data for the given currency name"""
+        today = datetime.date.today()
         if date is None:
-            date = datetime.date.today()
+            date = today
 
         if currency_name.upper() not in BPSParser.allowed_currencies:
             allowed = ", ".join(BPSParser.allowed_currencies)
             msg = "Incorrect currency '{}', allowed values: {}"
             raise BotLoggedError(msg.format(currency_name, allowed))
 
-        is_today = date == datetime.date.today()
+        is_today = date == today
         str_date = date.strftime(BPSParser.DATE_FORMAT)
 
         cached_item = None
@@ -105,11 +115,20 @@ class BPSParser(object):
                                                       currency_name,
                                                       str_date)
         if cached_item:
+            if not hasattr(cached_item, 'multiplier'):
+                if today < self.DENOMINATION_DATE:
+                    cached_item.multiplier = 10000
+                else:
+                    cached_item.multiplier = 1
             return cached_item
 
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
+                if today < self.DENOMINATION_DATE:
+                    currency.multiplier = 10000
+                else:
+                    currency.multiplier = 1
                 if not is_today and use_cache:
                     self.cache.cache_currency(self.short_name,
                                               currency,

@@ -8,9 +8,10 @@ from cache.mongo import MongoCurrencyCache
 from currency import Currency
 from bot_exceptions import BotLoggedError
 from settings import LOGGER_NAME
+from parsers.base import BaseParser
 
 
-class PriorbankParser(object):
+class PriorbankParser(BaseParser):
 
     is_active = True
     allowed_currencies = ('USD', 'RUB', 'EUR')
@@ -65,16 +66,23 @@ class PriorbankParser(object):
     def get_all_currencies(self, date=None):
         """Get all available currencies for the given date
         (both sell and purchase)"""
+        today = datetime.date.today()
         if date is None:
-            date = datetime.date.today()
+            date = today
         json_data = self._response_for_date(date)
-        return self._currencies_from_json_response(json_data)
+        currencies = self._currencies_from_json_response(json_data)
+        for currency in currencies:
+            if today < self.DENOMINATION_DATE:
+                currency.multiplier = 10000
+            else:
+                currency.multiplier = 1
+        return currencies
 
     def get_currency(self, currency_name="USD", date=None):
         """Get currency data for the given currency name"""
+        today = datetime.date.today()
         if date is None:
-            date = datetime.date.today()
-
+            date = today
         if currency_name.upper() not in PriorbankParser.allowed_currencies:
             allowed = ", ".join(PriorbankParser.allowed_currencies)
             msg = "Incorrect currency '{}', allowed values: {}"
@@ -83,6 +91,10 @@ class PriorbankParser(object):
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
+                if today < self.DENOMINATION_DATE:
+                    currency.multiplier = 10000
+                else:
+                    currency.multiplier = 1
                 return currency
         return Currency.empty_currency()
 
