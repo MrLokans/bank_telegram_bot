@@ -6,10 +6,8 @@ from typing import Sequence, Set
 import requests
 from bs4 import BeautifulSoup
 
-from cache import MongoCurrencyCache, StrCacheAdapter
 from currency import Currency
 from bot_exceptions import BotLoggedError
-from settings import LOGGER_NAME
 from parsers.base import BaseParser
 
 CURRENCY_REGEX = re.compile(r'\d?\s*(?P<value>[A-Za-z]+)')
@@ -25,9 +23,8 @@ class BPSParser(BaseParser):
     BASE_URL = "http://www.bps-sberbank.by/43257F17004E948D/currency_rates"
     DATE_FORMAT = "%Y.%m.%d"
 
-    def __init__(self, parser="lxml", *args, **kwargs):
-        mongo_cache = MongoCurrencyCache(Currency, LOGGER_NAME)
-        self.cache = StrCacheAdapter(mongo_cache, Currency)
+    def __init__(self, cache=None, parser="lxml", *args, **kwargs):
+        self._cache = cache
         self._parser = parser
 
     @classmethod
@@ -88,11 +85,11 @@ class BPSParser(BaseParser):
             for c in currencies:
                 c.multiplier = 1
 
-        if not is_today and use_cache:
+        if not is_today and use_cache and self._cache is not None:
             for currency in currencies:
-                self.cache.cache_currency(self.short_name,
-                                          currency,
-                                          str_date)
+                self._cache.cache_currency(self.short_name,
+                                           currency,
+                                           str_date)
         return currencies
 
     def get_currency(self, currency_name="USD", date=None, use_cache=True):
@@ -111,9 +108,9 @@ class BPSParser(BaseParser):
 
         cached_item = None
         if not is_today:
-            cached_item = self.cache.get_cached_value(self.short_name,
-                                                      currency_name,
-                                                      str_date)
+            cached_item = self._cache.get_cached_value(self.short_name,
+                                                       currency_name,
+                                                       str_date)
         if cached_item:
             if not hasattr(cached_item, 'multiplier'):
                 if today < self.DENOMINATION_DATE:
@@ -129,10 +126,10 @@ class BPSParser(BaseParser):
                     currency.multiplier = 10000
                 else:
                     currency.multiplier = 1
-                if not is_today and use_cache:
-                    self.cache.cache_currency(self.short_name,
-                                              currency,
-                                              str_date)
+                if not is_today and use_cache and self._cache is not None:
+                    self._cache.cache_currency(self.short_name,
+                                               currency,
+                                               str_date)
                 return currency
         return Currency.empty_currency()
 

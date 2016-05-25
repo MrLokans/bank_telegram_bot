@@ -21,7 +21,7 @@ class MtbankParser(BaseParser):
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
                           'GBP', 'UAH', 'CHF', 'PLN')
 
-    def __init__(self, parser="html.parser", *args, **kwargs):
+    def __init__(self, parser="html.parser", cache=None, *args, **kwargs):
         self.name = MtbankParser.name
         self.short_name = MtbankParser.short_name
         self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)

@@ -5,9 +5,8 @@ from typing import Sequence
 import requests
 from bs4 import BeautifulSoup
 
-from cache import MongoCurrencyCache, StrCacheAdapter
 from currency import Currency
-from settings import LOGGER_NAME, logger
+from settings import logger
 from .base import BaseParser
 
 
@@ -21,11 +20,10 @@ class BelgazpromParser(BaseParser):
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
                           'GBP', 'UAH', 'CHF', 'PLN')
 
-    def __init__(self, parser="lxml", *args, **kwargs):
+    def __init__(self, parser="lxml", cache=None, *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
-        mongo_cache = MongoCurrencyCache(Currency, LOGGER_NAME)
-        self._cache = StrCacheAdapter(mongo_cache, Currency)
+        self._cache = cache
         self._parser = parser
 
     def __get_response_for_the_date(self,
@@ -101,7 +99,7 @@ class BelgazpromParser(BaseParser):
         str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
 
         is_today = date == today
-        if not is_today and use_cache:
+        if not is_today and use_cache and self._cache is not None:
             for currency in currencies:
                 self._cache.cache_currency(self.short_name,
                                            currency,
@@ -154,7 +152,7 @@ class BelgazpromParser(BaseParser):
                 else:
                     cur.multiplier = 1
 
-                if not is_today and use_cache:
+                if not is_today and use_cache and self._cache is not None:
                     self._cache.cache_currency(self.short_name, cur, str_date)
                 return cur
         else:

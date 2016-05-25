@@ -22,11 +22,12 @@ class StrCacheAdapter(object):
         str_result = self.cache.get(search_key)
         if str_result is None:
             return None
-        buy, sell = str_result.split(",")
+        buy, sell, multiplier = str_result.split(",")
         c = self.currency_cls(currency_name,
                               currency_name,
                               buy=float(buy),
-                              sell=float(sell))
+                              sell=float(sell),
+                              multiplier=int(multiplier))
         return c
 
     def cache_currency(self,
@@ -36,5 +37,10 @@ class StrCacheAdapter(object):
         search_key = "{}_{}_{}".format(bank_short_name.lower(),
                                        cur_instance.iso.lower(),
                                        str_date.lower())
-        str_value = ",".join([str(cur_instance.buy), str(cur_instance.sell)])
+        multiplier = 1
+        if hasattr(cur_instance, "multiplier"):
+            multiplier = cur_instance.multiplier
+        str_value = ",".join([str(cur_instance.buy),
+                              str(cur_instance.sell),
+                              str(multiplier)])
         self.cache.put(search_key, str_value)

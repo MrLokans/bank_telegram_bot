@@ -4,10 +4,8 @@ from typing import Dict, Set, Union
 
 import requests
 
-from cache.mongo import MongoCurrencyCache
 from currency import Currency
 from bot_exceptions import BotLoggedError
-from settings import LOGGER_NAME
 from parsers.base import BaseParser
 
 
@@ -23,8 +21,8 @@ class PriorbankParser(BaseParser):
 
     # p_p_col_pos=3&p_p_col_count=6&fromDate=08-05-2016&toDate=08-05-2016&channelIDs=3&currencies=all"
 
-    def __init__(self, parser="lxml", *args, **kwargs):
-        self._cache = MongoCurrencyCache(Currency, LOGGER_NAME)
+    def __init__(self, parser="lxml", cache=None, *args, **kwargs):
+        self._cache = cache
         self._parser = parser
 
     @classmethod

@@ -36,6 +36,8 @@ from settings import (
     LOCALIZATION_PATH,
     logger
 )
+from cache import MongoCurrencyCache
+from cache.adapters import StrCacheAdapter
 
 
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
@@ -51,6 +53,10 @@ lang = gettext.translation('telegrambot',
 lang.install()
 
 _ = lang.gettext
+
+
+default_cache = StrCacheAdapter(MongoCurrencyCache(Currency, __name__),
+                                Currency)
 
 api_token = os.environ.get(API_ENV_NAME, '')
 
@@ -143,7 +149,7 @@ def course(bot, update, args, **kwargs):
         bank_name = get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
-    parser_instance = parser()
+    parser_instance = parser(cache=default_cache)
 
     parse_date = utils.get_date_from_date_diff(days_diff)
     logger.info("Requesting course for {}".format(str(parse_date)))
@@ -218,7 +224,7 @@ def show_currency_graph(bot, update, args, **kwargs):
         bank_name = get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
-    parser_instance = parser()
+    parser_instance = parser(cache=default_cache)
 
     if currency == 'all':
         currency = DEFAULT_CURRENCY.upper()
@@ -336,7 +342,7 @@ def set_default_bank(bot, update, args):
 def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
     """Get best sell and buy rates for available banks"""
     parser_classes = utils.get_parser_classes()
-    parsers = [parser() for parser in parser_classes
+    parsers = [parser(cache=default_cache) for parser in parser_classes
                if parser.short_name != 'nbrb']
     results = [(p.name, p.get_currency(currency)) for p in parsers]
     best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
@@ -388,7 +394,7 @@ def inline_rate(bot, update):
     results = list()
 
     parser_classes = utils.get_parser_classes()
-    parsers = [parser()
+    parsers = [parser(cache=default_cache)
                for parser in parser_classes]
 
     for parser in parsers:

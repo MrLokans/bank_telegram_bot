@@ -2,16 +2,18 @@ from typing import Union, Dict
 
 
 class Currency(object):
-    __slots__ = ('name', 'iso', 'buy', 'sell')
+    __slots__ = ('name', 'iso', 'buy', 'sell', 'multiplier')
 
     def __init__(self, name: str="",
                  iso: str="",
                  sell: Union[float, int]=None,
-                 buy: Union[float, int]=None) -> None:
+                 buy: Union[float, int]=None,
+                 multiplier: int=1) -> None:
         self.name = name
         self.iso = iso
         self.sell = sell
         self.buy = buy
+        self.multiplier = multiplier
 
     def __repr__(self) -> str:
         s = "Currency({}, {}, {}, {})"
@@ -26,7 +28,8 @@ class Currency(object):
         sell_equal = self.sell == other.sell
         buy_equal = self.buy == other.buy
         iso_equal = self.iso == other.iso
-        return sell_equal and buy_equal and iso_equal
+        mul_equal = self.multiplier == other.multiplier
+        return sell_equal and buy_equal and iso_equal and mul_equal
 
     def __hash__(self) -> int:
         s = self.iso + str(self.sell) + str(self.buy)
@@ -41,7 +44,8 @@ class Currency(object):
             "name": self.name,
             "iso": self.iso,
             "buy": self.buy,
-            "sell": self.sell
+            "sell": self.sell,
+            "multiplier": self.multiplier
         }
         return currency_dict
 
