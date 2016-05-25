@@ -3,8 +3,6 @@
 import logging
 import typing
 
-import pymongo
-
 
 from cache import AbstractCache
 from cache import mongo_settings as settings
@@ -14,6 +12,7 @@ Cur = typing.TypeVar('Cur')
 
 class MongoCurrencyCache(AbstractCache):
     def __init__(self, currency_cls, logger_name):
+        import pymongo
         self.server_delay = 10
         self.is_storage_available = False
         self.logger = logging.getLogger(name=logger_name)
