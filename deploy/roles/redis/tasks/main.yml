@@ -1,0 +1,29 @@
+---
+  - name: (Debian) Install Redis
+    when: ansible_os_family == 'Debian'
+    apt: name={{ item }} state=present
+    with_items: 
+      - redis
+
+  - name: (RedHat) Install Redis
+    when: ansible_os_family == 'RedHat'
+    yum: name={{ item }} state=latest update_cache=yes
+    with_items: 
+      - redis
+
+  - name: Copy redis config file
+    template:
+      src: templates/redis.conf.j2
+      dest: /etc/redis.conf
+
+  - name: Ensure redis is running
+    service:
+      name: redis
+      state: started
+
+  - name: Enable redis
+    service:
+      name: redis
+      enabled: yes
+    notify: restart redis
+

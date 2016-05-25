@@ -10,16 +10,14 @@
     - bot_api_token: "{{ lookup('ini', 'token section=telegram file=credentials.ini') }}"
     - bot_supervisor_owner: mrlokans
 
-    - mongo_host: "{{ lookup('ini', 'mongo_host section=mongo file=credentials.ini') }}"
-    - mongo_port: "{{ lookup('ini', 'mongo_port section=mongo file=credentials.ini') }}"
-    - mongo_db: "{{ lookup('ini', 'mongo_db section=mongo file=credentials.ini') }}"
-    - mongo_collection: "{{ lookup('ini', 'mongo_collection section=mongo file=credentials.ini') }}"
-    - mongo_user: "{{ lookup('ini', 'mongo_user section=mongo file=credentials.ini') }}"
-    - mongo_password: "{{ lookup('ini', 'mongo_password section=mongo file=credentials.ini') }}"
+    - redis_host: "{{ lookup('ini', 'redis_host section=redis file=credentials.ini') }}"
+    - redis_port: "{{ lookup('ini', 'redis_port section=redis file=credentials.ini') }}"
+    - redis_db: "{{ lookup('ini', 'redis_db section=redis file=credentials.ini') }}"
 
   roles:
     - epel
     - python
-    - mongodb
+    # - mongodb
     - supervisord
+    - redis
     - telegrambot
