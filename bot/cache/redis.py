@@ -2,8 +2,8 @@
 
 import redis
 
-from bot.cache import AbstractCache
-from bot.cache import redis_settings as settings
+from . import AbstractCache
+from . import redis_settings as settings
 
 
 class RedisCache(AbstractCache):
@@ -19,7 +19,7 @@ class RedisCache(AbstractCache):
 
     def get(self, key, key_type=None):
         try:
-            item = self._connection.get('key')
+            item = self._connection.get(key)
             return item
         except redis.exceptions.ConnectionError:
             return None

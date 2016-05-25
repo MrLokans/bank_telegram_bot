@@ -22,6 +22,7 @@ class StrCacheAdapter(object):
         str_result = self.cache.get(search_key)
         if str_result is None:
             return None
+        str_result = str_result.decode('utf-8')
         buy, sell, multiplier = str_result.split(",")
         c = self.currency_cls(currency_name,
                               currency_name,
