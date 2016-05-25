@@ -36,7 +36,7 @@ from settings import (
     LOCALIZATION_PATH,
     logger
 )
-from cache import MongoCurrencyCache
+from cache import RedisCache
 from cache.adapters import StrCacheAdapter
 
 
@@ -55,7 +55,7 @@ lang.install()
 _ = lang.gettext
 
 
-default_cache = StrCacheAdapter(MongoCurrencyCache(Currency, __name__),
+default_cache = StrCacheAdapter(RedisCache(Currency, __name__),
                                 Currency)
 
 api_token = os.environ.get(API_ENV_NAME, '')

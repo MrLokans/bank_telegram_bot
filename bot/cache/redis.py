@@ -20,8 +20,7 @@ class RedisCache(AbstractCache):
     def get(self, key, key_type=None):
         try:
             item = self._connection.get('key')
-            if item is not None:
-                return item["value"]
+            return item
         except redis.exceptions.ConnectionError:
             return None
         return None
