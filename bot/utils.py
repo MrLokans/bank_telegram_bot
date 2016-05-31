@@ -100,18 +100,10 @@ def get_date_arg(args: Sequence[str]):
     return date
 
 
-def get_date_from_date_diff(day_difference: int) -> datetime.date:
-    """Returns date n days from now"""
-    now = datetime.date.today()
-    return now - datetime.timedelta(days=int(day_difference))
-
-
-def str_from_date(date: datetime.date) -> str:
-    return date.strftime("%d.%m.%Y")
-
-
-def debug_msg(msg):
-    print("DEBUG: {}".format(msg))
+def get_date_from_date_diff(day_difference: int,
+                            today: datetime.date) -> datetime.date:
+    """Returns date that is N days from the given date."""
+    return today - datetime.timedelta(days=int(day_difference))
 
 
 def date_diffs_for_long_diff(day_diff: int,

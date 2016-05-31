@@ -3,6 +3,7 @@
 import os
 from uuid import uuid4
 import logging
+import datetime
 import functools
 from typing import Mapping, Any, Dict, Tuple
 from collections import deque, namedtuple
@@ -151,7 +152,8 @@ def course(bot, update, args, **kwargs):
     parser = utils.get_parser(bank_name)
     parser_instance = parser(cache=default_cache)
 
-    parse_date = utils.get_date_from_date_diff(days_diff)
+    parse_date = utils.get_date_from_date_diff(days_diff,
+                                               datetime.date.today())
     logger.info("Requesting course for {}".format(str(parse_date)))
 
     if preferences['currency'] == 'all':
@@ -166,7 +168,8 @@ def course(bot, update, args, **kwargs):
         currencies_text_value = "\n".join(header + displayed_values)
         bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
         bot.sendMessage(chat_id=chat_id,
-                        text=_("Currencies: \n{curs}").format(curs=currencies_text_value),
+                        text=_("Currencies: \n{curs}").format(
+                            curs=currencies_text_value),
                         parse_mode=ParseMode.HTML)
 
         return
@@ -231,7 +234,8 @@ def show_currency_graph(bot, update, args, **kwargs):
 
     date_diffs = utils.date_diffs_for_long_diff(days_diff)
 
-    dates = [utils.get_date_from_date_diff(d) for d in date_diffs]
+    today = datetime.date.today()
+    dates = [utils.get_date_from_date_diff(d, today) for d in date_diffs]
     past_date, future_date = dates[0], dates[-1]
 
     plot_image_name = plotting.generate_plot_name(parser.short_name, currency,
@@ -459,11 +463,15 @@ def main():
 
     dispatcher.addHandler(CommandHandler('start', start))
     dispatcher.addHandler(CommandHandler('help', help_user))
-    dispatcher.addHandler(CommandHandler('course', course, pass_args=True))
-    dispatcher.addHandler(CommandHandler('graph', show_currency_graph, pass_args=True))
+    dispatcher.addHandler(CommandHandler('course', course,
+                                         pass_args=True))
+    dispatcher.addHandler(CommandHandler('graph', show_currency_graph,
+                                         pass_args=True))
     dispatcher.addHandler(CommandHandler('banks', list_banks))
-    dispatcher.addHandler(CommandHandler('set', set_default_bank, pass_args=True))
-    dispatcher.addHandler(CommandHandler('best', best_course, pass_args=True))
+    dispatcher.addHandler(CommandHandler('set', set_default_bank,
+                                         pass_args=True))
+    dispatcher.addHandler(CommandHandler('best', best_course,
+                                         pass_args=True))
     inline_rate_handler = InlineQueryHandler(inline_rate)
     dispatcher.addHandler(inline_rate_handler)
 
