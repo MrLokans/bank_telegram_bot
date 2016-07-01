@@ -9,7 +9,7 @@ class BaseParser(object, metaclass=ABCMeta):
     allowed_currencies = tuple()
     name = 'Base Parser'
     short_name = 'base'
-    DENOMINATION_DATE = datetime.date(year=2016, month=6, day=1)
+    DENOMINATION_DATE = datetime.date(year=2016, month=7, day=1)
 
     @abstractmethod
     def get_all_currencies(self, date=None):

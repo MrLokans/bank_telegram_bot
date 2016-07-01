@@ -264,8 +264,8 @@ def show_currency_graph(bot, update, args, **kwargs):
         currencies = utils.sort_by_value(currencies_deque, dates)
         logging.info("Creating a plot.")
         x = [d for d in dates]
-        y_buy = [c.buy for c in currencies]
-        y_sell = [c.sell for c in currencies]
+        y_buy = [c.buy / c.multiplier for c in currencies]
+        y_sell = [c.sell / c.multiplier for c in currencies]
         plotting.render_exchange_rate_plot(x, y_buy, y_sell, output_file)
         plotting.reset_plot()
 

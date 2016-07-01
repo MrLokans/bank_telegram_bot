@@ -9,6 +9,10 @@ from currency import Currency
 from settings import logger
 from .base import BaseParser
 
+import logging
+
+logger = logging.getLogger("belgazprombank")
+
 
 class BelgazpromParser(BaseParser):
     is_active = True
@@ -69,6 +73,7 @@ class BelgazpromParser(BaseParser):
                     c = BelgazpromParser.__currency_object_from_row(row)
                     currencies.append(c)
                 except ValueError:
+                    logger.error("Error obtaining currency object from {}".format(row))
                     currencies.append(Currency.empty_currency())
             return currencies
 
@@ -76,10 +81,14 @@ class BelgazpromParser(BaseParser):
     def __currency_object_from_row(cls,
                                    row_object: BeautifulSoup) -> Currency:
         table_cols = row_object.find_all('td')
+        buy = table_cols[3].find_all("span")[0].text.strip()
+        sell = table_cols[4].find_all("span")[0].text.strip()
+        buy = buy.replace(" ", "")
+        sell = sell.replace(" ", "")
         return Currency(name=table_cols[0].text.strip(),
-                        iso=table_cols[1].text,
-                        sell=float(table_cols[3].find(text=True)),
-                        buy=float(table_cols[2].find(text=True)))
+                        iso=table_cols[2].text,
+                        sell=float(sell),
+                        buy=float(buy))
 
     def get_all_currencies(self,
                            date: datetime.date=None,
@@ -94,7 +103,7 @@ class BelgazpromParser(BaseParser):
         currency_table = self.__get_currency_table(s)
         currencies = self.__get_currency_objects(currency_table)
 
-        if today < self.DENOMINATION_DATE:
+        if date < self.DENOMINATION_DATE:
             for c in currencies:
                 c.multiplier = 10000
         else:
@@ -131,7 +140,7 @@ class BelgazpromParser(BaseParser):
                                                        date)
         if cached_item:
             if not hasattr(cached_item, 'multiplier'):
-                if today < self.DENOMINATION_DATE:
+                if date < self.DENOMINATION_DATE:
                     cached_item.multiplier = 10000
                 else:
                     cached_item.multiplier = 1
@@ -143,7 +152,7 @@ class BelgazpromParser(BaseParser):
         for cur in currencies:
 
             if currency_name.upper() == cur.iso:
-                if today < self.DENOMINATION_DATE:
+                if date < self.DENOMINATION_DATE:
                     cur.multiplier = 10000
                 else:
                     cur.multiplier = 1

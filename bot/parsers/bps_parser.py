@@ -76,7 +76,7 @@ class BPSParser(BaseParser):
         rows = self.__rate_rows(soup)
 
         currencies = set([self._currency_from_row(row) for row in rows])
-        if today < self.DENOMINATION_DATE:
+        if date < self.DENOMINATION_DATE:
             for c in currencies:
                 c.multiplier = 10000
         else:
@@ -107,7 +107,7 @@ class BPSParser(BaseParser):
                                                        date)
         if cached_item:
             if not hasattr(cached_item, 'multiplier'):
-                if today < self.DENOMINATION_DATE:
+                if date < self.DENOMINATION_DATE:
                     cached_item.multiplier = 10000
                 else:
                     cached_item.multiplier = 1
@@ -116,7 +116,7 @@ class BPSParser(BaseParser):
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
-                if today < self.DENOMINATION_DATE:
+                if date < self.DENOMINATION_DATE:
                     currency.multiplier = 10000
                 else:
                     currency.multiplier = 1

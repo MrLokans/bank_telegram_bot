@@ -70,7 +70,7 @@ class PriorbankParser(BaseParser):
         json_data = self._response_for_date(date)
         currencies = self._currencies_from_json_response(json_data)
         for currency in currencies:
-            if today < self.DENOMINATION_DATE:
+            if date < self.DENOMINATION_DATE:
                 currency.multiplier = 10000
             else:
                 currency.multiplier = 1
@@ -89,7 +89,7 @@ class PriorbankParser(BaseParser):
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
-                if today < self.DENOMINATION_DATE:
+                if date < self.DENOMINATION_DATE:
                     currency.multiplier = 10000
                 else:
                     currency.multiplier = 1
