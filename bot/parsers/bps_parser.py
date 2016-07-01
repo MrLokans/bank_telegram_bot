@@ -19,7 +19,8 @@ class BPSParser(BaseParser):
     allowed_currencies = tuple()
     name = 'БПС-Банк'
     short_name = 'bpsb'
-    allowed_currencies = set(('USD', 'EUR', 'RUB', 'UAH', 'PLN', 'GBP', 'CHF'))
+    allowed_currencies = set(('USD', 'EUR', 'RUB', 'UAH',
+                              'PLN', 'GBP', 'CHF', 'BYN'))
     BASE_URL = "http://www.bps-sberbank.by/43257F17004E948D/currency_rates"
     DATE_FORMAT = "%Y.%m.%d"
 
@@ -74,9 +75,6 @@ class BPSParser(BaseParser):
         soup = self._soup_from_response(response)
         rows = self.__rate_rows(soup)
 
-        is_today = date == today
-        str_date = date.strftime(BPSParser.DATE_FORMAT)
-
         currencies = set([self._currency_from_row(row) for row in rows])
         if today < self.DENOMINATION_DATE:
             for c in currencies:
@@ -84,12 +82,9 @@ class BPSParser(BaseParser):
         else:
             for c in currencies:
                 c.multiplier = 1
+        for currency in currencies:
+            self.try_caching(currency, date, today, use_cache=use_cache)
 
-        if not is_today and use_cache and self._cache is not None:
-            for currency in currencies:
-                self._cache.cache_currency(self.short_name,
-                                           currency,
-                                           str_date)
         return currencies
 
     def get_currency(self, currency_name="USD", date=None, use_cache=True):
@@ -104,13 +99,12 @@ class BPSParser(BaseParser):
             raise BotLoggedError(msg.format(currency_name, allowed))
 
         is_today = date == today
-        str_date = date.strftime(BPSParser.DATE_FORMAT)
 
         cached_item = None
         if not is_today:
             cached_item = self._cache.get_cached_value(self.short_name,
                                                        currency_name,
-                                                       str_date)
+                                                       date)
         if cached_item:
             if not hasattr(cached_item, 'multiplier'):
                 if today < self.DENOMINATION_DATE:
@@ -126,10 +120,7 @@ class BPSParser(BaseParser):
                     currency.multiplier = 10000
                 else:
                     currency.multiplier = 1
-                if not is_today and use_cache and self._cache is not None:
-                    self._cache.cache_currency(self.short_name,
-                                               currency,
-                                               str_date)
+                self.try_caching(currency, date, today, use_cache=use_cache)
                 return currency
         return Currency.empty_currency()
 

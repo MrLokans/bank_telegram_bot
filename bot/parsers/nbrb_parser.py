@@ -25,7 +25,7 @@ class NBRBParser(BaseParser):
                           'ROL', 'XDR', 'SGD', 'SKK', 'TJR',
                           'TRL', 'TMM', 'UZS', 'UAK', 'FIM',
                           'FRF', 'GBP', 'CZK', 'SEK', 'CHF',
-                          'XEU', 'EEK', 'EUR')
+                          'XEU', 'EEK', 'EUR', 'BYN')
 
     def __init__(self,
                  parser: str="html.parser",

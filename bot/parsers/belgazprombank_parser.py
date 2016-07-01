@@ -18,7 +18,7 @@ class BelgazpromParser(BaseParser):
     short_name = 'bgp'
     MINIMAL_DATE = datetime.datetime(year=2004, month=5, day=1)
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
-                          'GBP', 'UAH', 'CHF', 'PLN')
+                          'GBP', 'UAH', 'CHF', 'PLN', 'BYN')
 
     def __init__(self, parser="lxml", cache=None, *args, **kwargs):
         self.name = BelgazpromParser.name
@@ -61,11 +61,16 @@ class BelgazpromParser(BaseParser):
             currency data
         """
         if not days_since_now:
+            currencies = []
             exchange_table = cur_table.find('table').find('tbody')
             exchange_rows = exchange_table.find_all('tr')
-            return [BelgazpromParser.__currency_object_from_row(row)
-                    for row in exchange_rows]
-        # TODO: add data display for the date in the past
+            for row in exchange_rows:
+                try:
+                    c = BelgazpromParser.__currency_object_from_row(row)
+                    currencies.append(c)
+                except ValueError:
+                    currencies.append(Currency.empty_currency())
+            return currencies
 
     @classmethod
     def __currency_object_from_row(cls,
@@ -96,15 +101,8 @@ class BelgazpromParser(BaseParser):
             for c in currencies:
                 c.multiplier = 1
 
-        str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
-
-        is_today = date == today
-        if not is_today and use_cache and self._cache is not None:
-            for currency in currencies:
-                self._cache.cache_currency(self.short_name,
-                                           currency,
-                                           str_date)
-
+        for currency in currencies:
+            self.try_caching(currency, date, today, use_cache=use_cache)
         return currencies
 
     def get_currency_for_diff_date(self,
@@ -126,13 +124,11 @@ class BelgazpromParser(BaseParser):
 
         is_today = date == today
 
-        str_date = date.strftime(BelgazpromParser.DATE_FORMAT)
-
         cached_item = None
         if not is_today:
             cached_item = self._cache.get_cached_value(self.short_name,
                                                        currency_name,
-                                                       str_date)
+                                                       date)
         if cached_item:
             if not hasattr(cached_item, 'multiplier'):
                 if today < self.DENOMINATION_DATE:
@@ -151,9 +147,7 @@ class BelgazpromParser(BaseParser):
                     cur.multiplier = 10000
                 else:
                     cur.multiplier = 1
-
-                if not is_today and use_cache and self._cache is not None:
-                    self._cache.cache_currency(self.short_name, cur, str_date)
+                self.try_caching(cur, date, today, use_cache=use_cache)
                 return cur
         else:
             return Currency.empty_currency()

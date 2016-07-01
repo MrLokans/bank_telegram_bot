@@ -19,7 +19,7 @@ class MtbankParser(BaseParser):
     short_name = 'mtb'
     MINIMAL_DATE = datetime.datetime(year=2004, month=5, day=1)
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
-                          'GBP', 'UAH', 'CHF', 'PLN')
+                          'GBP', 'UAH', 'CHF', 'PLN', 'BYN')
 
     def __init__(self, parser="html.parser", cache=None, *args, **kwargs):
         self.name = MtbankParser.name

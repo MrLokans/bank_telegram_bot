@@ -12,7 +12,7 @@ from parsers.base import BaseParser
 class PriorbankParser(BaseParser):
 
     is_active = True
-    allowed_currencies = ('USD', 'RUB', 'EUR')
+    allowed_currencies = ('USD', 'RUB', 'EUR', 'BYN')
     name = 'Priorbank Parser'
     short_name = 'prbp'
 

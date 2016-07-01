@@ -39,6 +39,9 @@ class Currency(object):
     def empty_currency(cls):
         return Currency("NoValue", "", 0, 0)
 
+    def is_empty(self):
+        return self.name == "NoValue" and self.buy == 0 and self.sell == 0
+
     def to_dict(self) -> Dict[str, Union[str, float, int]]:
         currency_dict = {
             "name": self.name,

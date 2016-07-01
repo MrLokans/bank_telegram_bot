@@ -1,0 +1,1 @@
+CACHE_DATE_FORMAT = "%d.%m.%Y"

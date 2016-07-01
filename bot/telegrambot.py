@@ -349,6 +349,7 @@ def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
     parsers = [parser(cache=default_cache) for parser in parser_classes
                if parser.short_name != 'nbrb']
     results = [(p.name, p.get_currency(currency)) for p in parsers]
+    results = list(filter(lambda x: not x[1].is_empty(), results))
     best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
     best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
 

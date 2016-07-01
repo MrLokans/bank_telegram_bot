@@ -6,6 +6,10 @@ so adapters help us to provide high-level interface to low-level cache
 operations.
 """
 
+import datetime
+
+from cache.conf import CACHE_DATE_FORMAT
+
 
 class StrCacheAdapter(object):
 
@@ -15,7 +19,8 @@ class StrCacheAdapter(object):
 
     def get_cached_value(self, bank_short_name: str,
                          currency_name: str,
-                         str_date: str):
+                         date: datetime.date):
+        str_date = date.strftime(CACHE_DATE_FORMAT)
         search_key = "{}_{}_{}".format(bank_short_name.lower(),
                                        currency_name.lower(),
                                        str_date.lower())
@@ -34,7 +39,8 @@ class StrCacheAdapter(object):
     def cache_currency(self,
                        bank_short_name: str,
                        cur_instance,
-                       str_date: str) -> None:
+                       date: datetime.date) -> None:
+        str_date = date.strftime(CACHE_DATE_FORMAT)
         search_key = "{}_{}_{}".format(bank_short_name.lower(),
                                        cur_instance.iso.lower(),
                                        str_date.lower())

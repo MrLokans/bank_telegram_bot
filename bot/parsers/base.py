@@ -21,3 +21,18 @@ class BaseParser(object, metaclass=ABCMeta):
     def get_currency(self, currency_name="USD", date=None):
         """Get currency data for the given currency name"""
         pass
+
+    def is_cache_set(self):
+        return hasattr(self, '_cache') and self._cache
+
+    def try_caching(self, currency, current_date, today_date, use_cache=True):
+        """Caches currency if cache is available and currency
+        object is not empty"""
+        if not use_cache:
+            return
+        if not self.is_cache_set():
+            return
+        is_today = today_date == current_date
+        if not is_today and not currency.is_empty():
+            self._cache.cache_currency(self.short_name,
+                                       currency, current_date)
