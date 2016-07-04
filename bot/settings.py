@@ -1,7 +1,9 @@
 # coding: utf-8
 
 import os
+import json
 import logging
+import logging.config
 import tempfile
 
 LOGGER_NAME = "bankparser"
@@ -14,7 +16,7 @@ PARSERS_DIR = "parsers"
 PIDFILE = os.path.join(tempfile.gettempdir(), "telegrambot.pid")
 LOCALIZATION_PATH = os.path.join(BASE_DIR, "locale")
 
-logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        level=logging.INFO)
+with open("logging.json") as f:
+    logging.config.dictConfig(json.load(f))
+
 logger = logging.getLogger(LOGGER_NAME)

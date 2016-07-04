@@ -2,7 +2,6 @@
 
 import os
 from uuid import uuid4
-import logging
 import datetime
 import functools
 from typing import Mapping, Any, Dict, Tuple
@@ -35,7 +34,7 @@ from settings import (
     DEFAULT_CURRENCY,
     DEFAULT_PARSER_NAME,
     LOCALIZATION_PATH,
-    logger
+    logging
 )
 from cache import RedisCache
 from cache.adapters import StrCacheAdapter
@@ -65,6 +64,9 @@ if not api_token:
     raise ValueError("No API token specified.")
 
 
+logger = logging.getLogger('telegrambot')
+
+
 def log_exceptions(bot_func):
     @functools.wraps(bot_func)
     def wrapper(bot, update, *args, **kwargs):
@@ -77,6 +79,18 @@ def log_exceptions(bot_func):
                             text=msg,
                             parse_mode=ParseMode.HTML)
             return
+    return wrapper
+
+
+def log_statistics(bot_func):
+    @functools.wraps(bot_func)
+    def wrapper(bot, update, *args, **kwargs):
+            message = update.message.text
+            user_id = str(update.message.from_user.id)
+            chat_id = update.message.chat_id
+            msg = "{} triggered, user_id: {}, chat_id {}"
+            logger.info(msg.format(message, user_id, chat_id))
+            bot_func(bot, update, *args, **kwargs)
     return wrapper
 
 
@@ -103,11 +117,14 @@ def start(bot, update):
 
 
 def unknown(bot, update):
-    bot.sendMessage(chat_id=update.message.chat_id,
+    logger.info("Unknown command triggered: {}".format(update.message.text))
+    chat_id = update.message.chat_id
+    bot.sendMessage(chat_id=chat_id,
                     text=_("Sorry, I didn't understand that command."))
 
 
 def error(bot, update, error):
+    logger.info("Error triggered for message {}".format(update.message.text))
     msg = _('Update "{update}" caused error "{err_msg}"').format(update=update,
                                                                  err_msg=error)
     logger.warn(msg)
@@ -135,15 +152,16 @@ def format_currency_string(cur: Currency) -> str:
 
 
 @run_async
+@log_statistics
 @log_exceptions
 def course(bot, update, args, **kwargs):
+    user_id = str(update.message.from_user.id)
     chat_id = update.message.chat_id
 
     preferences = parse_args(bot, update, args)
     if not preferences:
         return
 
-    user_id = str(update.message.from_user.id)
     days_diff = preferences['days_ago']
     bank_name = preferences['bank_name']
     if not bank_name:
@@ -154,8 +172,6 @@ def course(bot, update, args, **kwargs):
 
     parse_date = utils.get_date_from_date_diff(days_diff,
                                                datetime.date.today())
-    logger.info("Requesting course for {}".format(str(parse_date)))
-
     if preferences['currency'] == 'all':
         # We need to send data about all of the currencies
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
@@ -203,6 +219,7 @@ def result_date_saver(parser, currency, date):
 
 
 @run_async
+@log_statistics
 @log_exceptions
 def show_currency_graph(bot, update, args, **kwargs):
     """Sends user currency graph changes for the specified period of time.
@@ -211,6 +228,7 @@ def show_currency_graph(bot, update, args, **kwargs):
 
     user_id = str(update.message.from_user.id)
     chat_id = update.message.chat_id
+
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
     preferences = parse_args(bot, update, args)
@@ -274,9 +292,11 @@ def show_currency_graph(bot, update, args, **kwargs):
     return
 
 
+@log_statistics
 @log_exceptions
 def help_user(bot, update):
     chat_id = update.message.chat_id
+
     help_message = _("""Use following commands:
 /course -d <days ago> -c <currency name>  - display current exchange rate for the
 given currency or for all available currencies.
@@ -296,6 +316,7 @@ rate dynamincs for the specified period of time
 def list_banks(bot, update):
     """Show user names of banks that are supported"""
     chat_id = update.message.chat_id
+
     parser_classes = utils.get_parser_classes()
 
     bank_names = "\n".join(
@@ -309,6 +330,7 @@ def list_banks(bot, update):
     return
 
 
+@log_statistics
 @log_exceptions
 def set_default_bank(bot, update, args):
     chat_id = update.message.chat_id
@@ -361,10 +383,12 @@ def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
 
 
 @run_async
+@log_statistics
 @log_exceptions
 def best_course(bot, update, args, **kwargs):
     """Gets the best course rate for available banks."""
     chat_id = update.message.chat_id
+
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
     preferences = parse_args(bot, update, args)
@@ -386,7 +410,7 @@ def best_course(bot, update, args, **kwargs):
                                best["sell"][0],
                                best["sell"][1].sell)
     msg = "\n".join([buy_msg, sell_msg])
-    bot.sendMessage(chat_id=update.message.chat_id,
+    bot.sendMessage(chat_id=chat_id,
                     text=msg,
                     parse_mode=ParseMode.HTML)
     return
