@@ -94,6 +94,13 @@
       group: "{{ bot_group }}"
       state: directory
 
+  - name: Make sure directory for logs exists and has correct permissions
+    file:
+      path: "/var/log/telegrambot/"
+      owner: "{{ bot_user }}"
+      group: "{{ bot_group }}"
+      state: directory
+
   - name: Copy requirements files (platform specific)
     copy: 
       src: "{{ ansible_os_family|lower}}_requirements.txt"
