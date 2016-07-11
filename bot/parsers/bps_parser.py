@@ -10,7 +10,7 @@ from currency import Currency
 from bot_exceptions import BotLoggedError
 from parsers.base import BaseParser
 
-CURRENCY_REGEX = re.compile(r'\d?\s*(?P<value>[A-Za-z]+)')
+CURRENCY_REGEX = re.compile(r'(?P<multiplier>\d+)\s*(?P<value>[A-Za-z]+)')
 
 
 class BPSParser(BaseParser):
@@ -42,26 +42,29 @@ class BPSParser(BaseParser):
         return BeautifulSoup(text, self._parser)
 
     def __rate_rows(self, soup: BeautifulSoup) -> Sequence[BeautifulSoup]:
-        search_query = "div.currency-block table.icon tbody > tr"
+        search_query = "div.currency-block #tab-32 table.icon tbody > tr"
         return soup.select(search_query)
 
     def _currency_from_row(self, row: BeautifulSoup) -> Currency:
         row_cells = row.find_all("td")
         name = row_cells[0].find(text=True).lower()
         text = row_cells[1].find(text=True, recursive=False)
-        iso = self._subtract_cur_iso(text)
-        buy = row_cells[2].find(text=True, recursive=False)
-        sell = row_cells[3].find(text=True, recursive=False)
-        currency = Currency(name, iso, float(sell), float(buy))
+        multiplier, iso = self._subtract_cur_iso_and_multiplier(text)
+        buy = row_cells[2].find(text=True, recursive=False).replace(" ", "")
+        sell = row_cells[3].find(text=True, recursive=False).replace(" ", "")
+        currency = Currency(name, iso,
+                            float(sell) / multiplier,
+                            float(buy) / multiplier)
         return currency
 
-    def _subtract_cur_iso(self, cur: str) -> str:
+    def _subtract_cur_iso_and_multiplier(self, cur: str) -> str:
         """
             Value like '1 USD' should be turned simply into 'USD'
         """
         match = CURRENCY_REGEX.match(cur)
         if match:
-            return match.groupdict()["value"]
+            return (int(match.groupdict()["multiplier"]),
+                    match.groupdict()["value"])
         raise BotLoggedError("Incorrect currency supplied: {}".format(cur))
 
     def get_all_currencies(self, date=None, use_cache=True) -> Set[Currency]:
