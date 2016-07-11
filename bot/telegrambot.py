@@ -26,24 +26,22 @@ from telegram.ext import (
 from telegram.ext.dispatcher import run_async
 
 
-from bot_exceptions import BotArgumentParsingError, BotLoggedError
+from bot_exceptions import BotLoggedError
 from currency import Currency
 import plotting
 import utils
+
+import settings
 from settings import (
     DEFAULT_CURRENCY,
     DEFAULT_PARSER_NAME,
     LOCALIZATION_PATH,
+    USER_BANK_SELECTION_CACHE,
     logging
 )
 from cache import RedisCache
 from cache.adapters import StrCacheAdapter
 
-
-API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
-CACHE_EXPIRACY_MINUTES = 60
-IMAGES_FOLDER = "img"
-USER_BANK_SELECTION_CACHE = {}
 
 BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])
 
@@ -58,7 +56,7 @@ _ = lang.gettext
 default_cache = StrCacheAdapter(RedisCache(Currency, __name__),
                                 Currency)
 
-api_token = os.environ.get(API_ENV_NAME, '')
+api_token = os.environ.get(settings.API_ENV_NAME, '')
 
 if not api_token:
     raise ValueError("No API token specified.")
@@ -94,23 +92,6 @@ def log_statistics(bot_func):
     return wrapper
 
 
-def get_user_selected_bank(user_id: str,
-                           cache: Mapping[str, str]=USER_BANK_SELECTION_CACHE) -> str:
-    """Finds out whether the given user has bank associated with,
-    if not - returns the default one"""
-    if user_id not in cache:
-        bank_name = DEFAULT_PARSER_NAME
-    else:
-        bank_name = cache[user_id]
-    return bank_name
-
-
-def set_user_default_bank(user_id: str,
-                          bank_name: str,
-                          cache: Mapping[str, str]=USER_BANK_SELECTION_CACHE) -> None:
-    cache[user_id] = bank_name
-
-
 def start(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id,
                     text=_("I'm a bot, please talk to me!"))
@@ -130,27 +111,6 @@ def error(bot, update, error):
     logger.warn(msg)
 
 
-def parse_args(bot, update, args) -> Mapping[str, Any]:
-    try:
-        preferences = utils.preferences_from_args(args)
-    except BotArgumentParsingError as e:
-        logger.exception(str(e))
-        bot.sendMessage(chat_id=update.message.chat_id,
-                        text=str(e))
-        return {}
-
-    return preferences
-
-
-def format_currency_string(cur: Currency) -> str:
-    """Formats currency to be sent to user"""
-    format_s = '<b>{:<5}</b>{:<8}{:<8}'
-    s = format_s.format(cur.iso + ":",
-                        '-' if cur.buy is None else cur.buy,
-                        '-' if cur.sell is None else cur.sell)
-    return s
-
-
 @run_async
 @log_statistics
 @log_exceptions
@@ -158,14 +118,14 @@ def course(bot, update, args, **kwargs):
     user_id = str(update.message.from_user.id)
     chat_id = update.message.chat_id
 
-    preferences = parse_args(bot, update, args)
+    preferences = utils.parse_args(bot, update, args)
     if not preferences:
         return
 
     days_diff = preferences['days_ago']
     bank_name = preferences['bank_name']
     if not bank_name:
-        bank_name = get_user_selected_bank(user_id)
+        bank_name = utils.get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
     parser_instance = parser(cache=default_cache)
@@ -177,7 +137,7 @@ def course(bot, update, args, **kwargs):
         all_currencies = parser_instance.get_all_currencies(date=parse_date)
 
         all_currencies = utils.sort_currencies(all_currencies)
-        displayed_values = [format_currency_string(x)
+        displayed_values = [utils.format_currency_string(x)
                             for x in all_currencies]
         header = [_("\tBuy\tSell"), ]
 
@@ -201,7 +161,7 @@ def course(bot, update, args, **kwargs):
                             text=_("Unknown currency: {}").format(args[0]))
             return
         else:
-            text = format_currency_string(cur)
+            text = utils.format_currency_string(cur)
             bot.sendMessage(chat_id=chat_id,
                             text=text,
                             parse_mode=ParseMode.HTML)
@@ -231,7 +191,7 @@ def show_currency_graph(bot, update, args, **kwargs):
 
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
-    preferences = parse_args(bot, update, args)
+    preferences = utils.parse_args(bot, update, args)
     if not preferences:
         return
 
@@ -242,7 +202,7 @@ def show_currency_graph(bot, update, args, **kwargs):
     currency = preferences['currency']
     bank_name = preferences['bank_name']
     if not bank_name:
-        bank_name = get_user_selected_bank(user_id)
+        bank_name = utils.get_user_selected_bank(user_id)
 
     parser = utils.get_parser(bank_name)
     parser_instance = parser(cache=default_cache)
@@ -259,12 +219,12 @@ def show_currency_graph(bot, update, args, **kwargs):
     plot_image_name = plotting.generate_plot_name(parser.short_name, currency,
                                                   past_date, future_date)
 
-    if not os.path.exists(IMAGES_FOLDER):
+    if not os.path.exists(settings.IMAGES_FOLDER):
         try:
-            os.mkdir(IMAGES_FOLDER)
+            os.mkdir(settings.IMAGES_FOLDER)
         except OSError as e:
             logger.error("Error creating images folder: ".format(e))
-    output_file = os.path.join(IMAGES_FOLDER, plot_image_name)
+    output_file = os.path.join(settings.IMAGES_FOLDER, plot_image_name)
 
     if not is_image_cached(output_file):
 
@@ -339,7 +299,7 @@ def set_default_bank(bot, update, args):
     if len(args) != 1:
         # Send user data about the bank he is currently associated with
         if len(args) == 0:
-            default_bank = get_user_selected_bank(user_id)
+            default_bank = utils.get_user_selected_bank(user_id)
             msg = _("Your currently selected bank is {}").format(default_bank)
             bot.sendMessage(chat_id=chat_id,
                             text=msg)
@@ -359,7 +319,7 @@ def set_default_bank(bot, update, args):
         bot.sendMessage(chat_id=chat_id,
                         text=msg.format(bank_names))
         return
-    set_user_default_bank(user_id, bank_name)
+    utils.set_user_default_bank(user_id, bank_name)
     msg = _("Default bank succesfully set to {}")
     bot.sendMessage(chat_id=chat_id,
                     text=msg.format(bank_name))
@@ -391,7 +351,7 @@ def best_course(bot, update, args, **kwargs):
 
     bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 
-    preferences = parse_args(bot, update, args)
+    preferences = utils.parse_args(bot, update, args)
     if not preferences:
         return
     currency = preferences['currency']

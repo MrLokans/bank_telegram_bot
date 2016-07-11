@@ -11,7 +11,7 @@ from .base import BaseParser
 
 import logging
 
-logger = logging.getLogger("belgazprombank")
+logger = logging.getLogger("bot.parsers.belgazprombank_parser")
 
 
 class BelgazpromParser(BaseParser):

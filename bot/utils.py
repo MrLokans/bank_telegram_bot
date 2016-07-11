@@ -3,25 +3,25 @@
 """
 
 
-import re
 import os
 import glob
 import datetime
 import importlib
 import itertools
+import logging
 
 from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
 import settings
 
-from bot_exceptions import BotLoggedError
+from bot_exceptions import BotLoggedError, BotArgumentParsingError
 from currency import Currency
-
-DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
 
 A = TypeVar('A')
 T = TypeVar('T')
+
+logger = logging.getLogger('telegrambot')
 
 
 def sort_by_value(to_sort: Sequence[Tuple[A, T]],
@@ -94,7 +94,7 @@ def get_date_arg(args: Sequence[str]):
     """Return date difference from argument sequence if date flag is present"""
     date = 0
     for arg in args:
-        match = DATE_REGEX.match(arg)
+        match = settings.DATE_REGEX.match(arg)
         if match:
             date = int(match.groupdict()['date_diff'])
     return date
@@ -216,3 +216,41 @@ def sort_currencies(currencies: Sequence[Currency]) -> Sequence[Currency]:
     sorted_specific = sorted(specific, key=lambda x: priority[x.iso])
     sorted_generic = sorted(generic, key=lambda x: x.iso)
     return list(itertools.chain(sorted_specific, sorted_generic))
+
+
+def format_currency_string(cur: Currency) -> str:
+    """Formats currency to be sent to user"""
+    format_s = '<b>{:<5}</b>{:<8.3f}{:<8.3f}'
+    s = format_s.format(cur.iso + ":",
+                        '-' if cur.buy is None else cur.buy,
+                        '-' if cur.sell is None else cur.sell)
+    return s
+
+
+def parse_args(bot, update, args) -> Mapping[str, Any]:
+    try:
+        preferences = preferences_from_args(args)
+    except BotArgumentParsingError as e:
+        logger.exception(str(e))
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text=str(e))
+        return {}
+
+    return preferences
+
+
+def get_user_selected_bank(user_id: str,
+                           cache: Mapping[str, str]=settings.USER_BANK_SELECTION_CACHE) -> str:
+    """Finds out whether the given user has bank associated with,
+    if not - returns the default one"""
+    if user_id not in cache:
+        bank_name = settings.DEFAULT_PARSER_NAME
+    else:
+        bank_name = cache[user_id]
+    return bank_name
+
+
+def set_user_default_bank(user_id: str,
+                          bank_name: str,
+                          cache: Mapping[str, str]=settings.USER_BANK_SELECTION_CACHE) -> None:
+    cache[user_id] = bank_name
