@@ -105,7 +105,6 @@ def unknown(bot, update):
 
 
 def error(bot, update, error):
-    logger.info("Error triggered for message {}".format(update.message.text))
     msg = _('Update "{update}" caused error "{err_msg}"').format(update=update,
                                                                  err_msg=error)
     logger.warn(msg)
