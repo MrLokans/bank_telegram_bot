@@ -12,10 +12,10 @@ import logging
 
 from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
-import settings
+import bot.settings as settings
 
-from bot_exceptions import BotLoggedError, BotArgumentParsingError
-from currency import Currency
+from bot.bot_exceptions import BotLoggedError, BotArgumentParsingError
+from bot.currency import Currency
 
 
 A = TypeVar('A')

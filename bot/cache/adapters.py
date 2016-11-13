@@ -8,7 +8,7 @@ operations.
 
 import datetime
 
-from cache.conf import CACHE_DATE_FORMAT
+from bot.cache.conf import CACHE_DATE_FORMAT
 
 
 class StrCacheAdapter(object):

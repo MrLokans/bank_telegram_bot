@@ -4,7 +4,7 @@ import os
 from uuid import uuid4
 import datetime
 import functools
-from typing import Mapping, Any, Dict, Tuple
+from typing import Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import gettext
@@ -31,16 +31,16 @@ from currency import Currency
 import plotting
 import utils
 
-import settings
-from settings import (
+import bot.settings as settings
+from bot.settings import (
     DEFAULT_CURRENCY,
     DEFAULT_PARSER_NAME,
     LOCALIZATION_PATH,
     USER_BANK_SELECTION_CACHE,
     logging
 )
-from cache import RedisCache
-from cache.adapters import StrCacheAdapter
+from bot.cache import RedisCache
+from bot.cache.adapters import StrCacheAdapter
 
 
 BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])

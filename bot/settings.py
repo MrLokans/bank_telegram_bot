@@ -17,7 +17,6 @@ PARSERS_DIR = "parsers"
 PIDFILE = os.path.join(tempfile.gettempdir(), "telegrambot.pid")
 LOCALIZATION_PATH = os.path.join(BASE_DIR, "locale")
 
-
 API_ENV_NAME = 'BANK_BOT_AP_TOKEN'
 CACHE_EXPIRACY_MINUTES = 60
 IMAGES_FOLDER = "img"
@@ -25,9 +24,10 @@ USER_BANK_SELECTION_CACHE = {}
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
+LOGGING_SETTINGS_FILE = os.path.join(BASE_DIR, "logging.json")
 
-with open("logging.json") as f:
-    logging.config.dictConfig(json.load(f))
+if os.path.exists(LOGGING_SETTINGS_FILE):
+    with open(LOGGING_SETTINGS_FILE) as f:
+        logging.config.dictConfig(json.load(f))
 
 logger = logging.getLogger(LOGGER_NAME)
-

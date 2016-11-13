@@ -4,8 +4,8 @@ import logging
 import typing
 
 
-from cache import AbstractCache
-from cache import mongo_settings as settings
+from bot.cache import AbstractCache
+from bot.cache import mongo_settings as settings
 
 Cur = typing.TypeVar('Cur')
 

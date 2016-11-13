@@ -1,14 +1,14 @@
 import datetime
 import unittest
 
-from utils import (
+from bot.utils import (
     get_date_arg,
     get_date_from_date_diff,
     date_diffs_for_long_diff,
     sort_currencies
 )
 
-from currency import Currency
+from bot.currency import Currency
 
 
 class TestUtils(unittest.TestCase):
