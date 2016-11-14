@@ -83,7 +83,7 @@
       state: directory
 
   - name: Create python's virtual environment
-    command: virtualenv {{ project_virtualenv_folder }} -p python3.4 creates={{ project_virtualenv_folder }}
+    command: virtualenv {{ project_virtualenv_folder }} -p /usr/local/bin/python3.5 creates={{ project_virtualenv_folder }}
     become: yes
     become_user: "{{ bot_user }}"
 
@@ -120,10 +120,7 @@
 
   # TODO: place all wheels in a single folder
   - name: Install bot's dependencies
-    pip:
-      requirements: "{{ project_root_dir }}bot/requirements.txt" 
-      virtualenv: "{{ project_virtualenv_folder }}"
-      extra_args: "--no-cache-dir --isolated -vv --disable-pip-version-check -f {{ wheels_dir }}"
+    command: "{{ project_virtualenv_folder }}bin/pip install -r {{ project_root_dir }}bot/requirements.txt"
     become: yes
     become_user: "{{ bot_user }}"
     notify: restart supervisord

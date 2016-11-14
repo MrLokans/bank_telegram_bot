@@ -15,9 +15,9 @@
     - redis_db: "{{ lookup('ini', 'redis_db section=redis file=credentials.ini') }}"
 
   roles:
-    - epel
-    - python
+    # - epel
+    # - python
     # - mongodb
     - supervisord
-    - redis
+    # - redis
     - telegrambot
