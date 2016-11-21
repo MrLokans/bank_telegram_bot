@@ -4,9 +4,9 @@ from typing import Dict, Set, Union
 
 import requests
 
-from currency import Currency
-from bot_exceptions import BotLoggedError
-from parsers.base import BaseParser
+from bot.currency import Currency
+from bot.exceptions import BotLoggedError
+from bot.parsers.base import BaseParser
 
 
 class PriorbankParser(BaseParser):
@@ -95,6 +95,7 @@ class PriorbankParser(BaseParser):
                     currency.multiplier = 1
                 return currency
         return Currency.empty_currency()
+
 
 if __name__ == '__main__':
     parser = PriorbankParser()

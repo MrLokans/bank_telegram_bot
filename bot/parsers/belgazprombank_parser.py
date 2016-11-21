@@ -5,8 +5,8 @@ from typing import Sequence
 import requests
 from bs4 import BeautifulSoup
 
-from currency import Currency
-from settings import logger
+from bot.currency import Currency
+from bot.settings import logger
 from .base import BaseParser
 
 import logging

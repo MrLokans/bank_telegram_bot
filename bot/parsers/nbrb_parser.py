@@ -2,11 +2,12 @@
 
 import datetime
 from typing import Sequence
-import requests
 
-from currency import Currency
+import requests
 from lxml import etree
-from parsers.base import BaseParser
+
+from bot.currency import Currency
+from bot.parsers.base import BaseParser
 
 
 class NBRBParser(BaseParser):

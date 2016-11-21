@@ -6,9 +6,9 @@ from typing import Sequence, Set
 import requests
 from bs4 import BeautifulSoup
 
-from currency import Currency
-from bot_exceptions import BotLoggedError
-from parsers.base import BaseParser
+from bot.currency import Currency
+from bot.exceptions import BotLoggedError
+from bot.parsers.base import BaseParser
 
 CURRENCY_REGEX = re.compile(r'(?P<multiplier>\d+)\s*(?P<value>[A-Za-z]+)')
 
