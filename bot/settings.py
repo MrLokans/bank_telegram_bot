@@ -13,7 +13,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__name__))
 DEFAULT_CURRENCY = "usd"
 DEFAULT_PARSER_MODULE = "belgazprombank_parser"
 DEFAULT_PARSER_NAME = "bgp"
-PARSERS_DIR = "parsers"
+PARSERS_DIR = os.path.join("bot", "parsers")
 PIDFILE = os.path.join(tempfile.gettempdir(), "telegrambot.pid")
 LOCALIZATION_PATH = os.path.join(BASE_DIR, "locale")
 
