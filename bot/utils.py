@@ -14,7 +14,7 @@ from typing import Sequence, Mapping, Any, Tuple, TypeVar
 
 import bot.settings as settings
 
-from bot.bot_exceptions import BotLoggedError, BotArgumentParsingError
+from bot.exceptions import BotLoggedError, BotArgumentParsingError
 from bot.currency import Currency
 
 
@@ -128,10 +128,32 @@ def date_diffs_for_long_diff(day_diff: int,
 
 
 def get_default_parser_class(parsers_dir=settings.PARSERS_DIR):
-    parser_path = ".".join([parsers_dir, settings.DEFAULT_PARSER_MODULE])
+    dir_components = list(filter(lambda x: x.strip(), parsers_dir.split('/')))
+    dir_components.append(settings.DEFAULT_PARSER_MODULE)
+    parser_path = ".".join(dir_components)
     default_module = importlib.import_module(parser_path)
     default_parser = parser_class_from_module(default_module)
     return default_parser
+
+
+def get_parser_file_names():
+    """
+    Gets parser class names
+    """
+    parser_files = glob.glob("bot/parsers/*_parser.py")
+    return [os.path.basename(os.path.splitext(p)[0])
+            for p in parser_files]
+
+
+def parser_module_name(parser_fname):
+    """
+    Generates module path for the given
+    parser name
+
+    >>> parser_module_name('some_parser.py')
+    >>> 'bot.parsers.some_parser'
+    """
+    return ".".join(["bot", "parsers", parser_fname])
 
 
 def get_parser_classes(active_only: bool=True):
@@ -139,11 +161,10 @@ def get_parser_classes(active_only: bool=True):
         Scans for classes that provide bank scraping and returns them as a list
     """
     parser_classes = []
-    parser_files = glob.glob("parsers/*_parser.py")
-    module_names = [os.path.basename(os.path.splitext(p)[0])
-                    for p in parser_files]
+    module_names = get_parser_file_names()
     for module_name in module_names:
-        module = importlib.import_module(".".join(["parsers", module_name]))
+        module_name = parser_module_name(module_name)
+        module = importlib.import_module(module_name)
         parser_class = parser_class_from_module(module)
         if parser_class is not None:
             if not active_only:
@@ -152,7 +173,6 @@ def get_parser_classes(active_only: bool=True):
             has_active_field = hasattr(parser_class, "is_active")
             if has_active_field and parser_class.is_active:
                 parser_classes.append(parser_class)
-
     # We didn't find any extra class (techncally, currently it is not possible,
     # but who cares?) so we return default one
     if len(parser_classes) == 0:
