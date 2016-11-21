@@ -124,6 +124,7 @@
     become: yes
     become_user: "{{ bot_user }}"
     notify: restart supervisord
+    ignore_errors: true
 
   # - name: Install matplotlib from wheel if it is present
   #   pip:
