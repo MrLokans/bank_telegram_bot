@@ -26,10 +26,10 @@ from telegram.ext import (
 from telegram.ext.dispatcher import run_async
 
 
-from bot_exceptions import BotLoggedError
-from currency import Currency
-import plotting
-import utils
+from bot.exceptions import BotLoggedError
+from bot.currency import Currency
+import bot.plotting as plotting
+import bot.utils as utils
 
 import bot.settings as settings
 from bot.settings import (
@@ -45,22 +45,17 @@ from bot.cache.adapters import StrCacheAdapter
 
 BankCurrencyPair = namedtuple('BankCurrencyPair', ['name', 'currency'])
 
-lang = gettext.translation('telegrambot',
-                           localedir=LOCALIZATION_PATH,
-                           languages=['ru_RU'])
-lang.install()
+# lang = gettext.translation('telegrambot',
+#                            localedir=LOCALIZATION_PATH,
+#                            languages=['ru_RU'])
+# lang.install()
 
-_ = lang.gettext
+# _ = lang.gettext
+_ = lambda x: x
 
 
 default_cache = StrCacheAdapter(RedisCache(Currency, __name__),
                                 Currency)
-
-api_token = os.environ.get(settings.API_ENV_NAME, '')
-
-if not api_token:
-    raise ValueError("No API token specified.")
-
 
 logger = logging.getLogger('telegrambot')
 
@@ -440,7 +435,7 @@ def is_image_cached(image_path: str, max_n: int=8) -> bool:
     return os.path.exists(image_path)
 
 
-def main():
+def create_bot(api_token):
     updater = Updater(token=api_token)
 
     dispatcher = updater.dispatcher
@@ -464,10 +459,4 @@ def main():
 
     unknown_handler = RegexHandler(r'/.*', unknown)
     dispatcher.addHandler(unknown_handler)
-
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+    return updater
