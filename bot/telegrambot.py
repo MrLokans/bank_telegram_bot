@@ -40,6 +40,7 @@ from bot.settings import (
     logging
 )
 from bot.cache import RedisCache
+from bot.cache.cache_proxy import CacheProxy
 from bot.cache.adapters import StrCacheAdapter
 
 
@@ -56,6 +57,7 @@ _ = lambda x: x
 
 default_cache = StrCacheAdapter(RedisCache(Currency, __name__),
                                 Currency)
+cache_proxy = CacheProxy(default_cache)
 
 logger = logging.getLogger('telegrambot')
 
@@ -102,6 +104,7 @@ def unknown(bot, update):
 def error(bot, update, error):
     msg = _('Update "{update}" caused error "{err_msg}"').format(update=update,
                                                                  err_msg=error)
+    print(msg)
     logger.warn(msg)
 
 
@@ -123,12 +126,12 @@ def course(bot, update, args, **kwargs):
 
     parser = utils.get_parser(bank_name)
     parser_instance = parser(cache=default_cache)
-
     parse_date = utils.get_date_from_date_diff(days_diff,
                                                datetime.date.today())
     if preferences['currency'] == 'all':
         # We need to send data about all of the currencies
-        all_currencies = parser_instance.get_all_currencies(date=parse_date)
+        all_currencies = cache_proxy.get_all_currencies(parser_instance,
+                                                        date=parse_date)
 
         all_currencies = utils.sort_currencies(all_currencies)
         displayed_values = [utils.format_currency_string(x)
@@ -147,8 +150,9 @@ def course(bot, update, args, **kwargs):
     currency = preferences['currency']
     if currency.upper() in parser.allowed_currencies:
         # TODO: unify passing currency names (lowercase or uppercase only)
-        cur = parser_instance.get_currency(currency_name=currency,
-                                           date=parse_date)
+        cur = cache_proxy.get_currency(parser_instance,
+                                       currency_name=currency,
+                                       date=parse_date)
 
         if cur.name == 'NoValue':
             bot.sendMessage(chat_id=chat_id,
@@ -168,8 +172,12 @@ def course(bot, update, args, **kwargs):
         return
 
 
-def result_date_saver(parser, currency, date):
-    return (date, parser.get_currency(currency, date))
+def result_date_saver(parser, currency_name: str,
+                      date: datetime.date):
+    currency = cache_proxy.get_currency(parser,
+                                        currency_name=currency_name,
+                                        date=date)
+    return (date, currency)
 
 
 @run_async
@@ -324,7 +332,8 @@ def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
     parser_classes = utils.get_parser_classes()
     parsers = [parser(cache=default_cache) for parser in parser_classes
                if parser.short_name != 'nbrb']
-    results = [(p.name, p.get_currency(currency)) for p in parsers]
+    results = [(p.name, cache_proxy.get_currency(p, currency))
+               for p in parsers]
     results = list(filter(lambda x: not x[1].is_empty(), results))
     best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
     best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
@@ -414,7 +423,8 @@ def inline_rate(bot, update):
             return
         if query.upper() not in parser.allowed_currencies:
             continue
-        cur_value = parser.get_currency(query.upper())
+        cur_value = cache_proxy.get_currency(parser,
+                                             query.upper())
         bank_name = parser.name
         text = "{}\n<b>{}</b>: {}".format(bank_name,
                                           query.upper(),
