@@ -1,13 +1,13 @@
 # coding: utf-8
 
-import os
-import re
+import datetime
 import json
 import logging
 import logging.config
+import os
+import re
 import tempfile
 
-LOGGER_NAME = "bankparser"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__name__))
 DEFAULT_CURRENCY = "usd"
@@ -24,10 +24,15 @@ USER_BANK_SELECTION_CACHE = {}
 
 DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
+# logging settings
+LOGGER_NAME = "bankparser"
 LOGGING_SETTINGS_FILE = os.path.join(BASE_DIR, "logging.json")
 
 if os.path.exists(LOGGING_SETTINGS_FILE):
     with open(LOGGING_SETTINGS_FILE) as f:
         logging.config.dictConfig(json.load(f))
-
 logger = logging.getLogger(LOGGER_NAME)
+
+
+DENOMINATION_DATE = datetime.date(year=2016, month=7, day=1)
+DENOMINATION_MULTIPLIER = 10000
