@@ -1,11 +1,15 @@
 import datetime
-from typing import Sequence, Union
+from typing import (
+    Sequence,
+)
 
 from bot.currency import Currency
 from bot.settings import (
     DENOMINATION_DATE,
     DENOMINATION_MULTIPLIER
 )
+
+from threading import Lock
 
 
 class CacheProxy(object):
@@ -29,21 +33,26 @@ class CacheProxy(object):
         if date is None:
             date = datetime.date.today()
 
-        cached_currency = self.get_cached_currency(parser, currency_name, date)
-
-        if cached_currency is None:
+        сurrency = self.get_cached_currency(parser, currency_name, date)
+        if сurrency is None:
             currency = parser.get_currency(currency_name, date)
-            currency = self.denominate_currency(currency, date)
-        else:
-            currency = self.denominate_currency(cached_currency, date)
-
+        currency = self.denominate_currency(сurrency, date)
         return currency
 
     def get_all_currencies(self, parser,
                            date: datetime.date=None) -> Sequence[Currency]:
         if date is None:
             date = datetime.date.today()
-        return []
+        # TODO: investigate bulk caching of currencies
+        # for example we may check. whether all of the
+        # provided by parser currencies are cached
+        # and return cached values if so\
+        currencies = parser.get_all_currencies(date)
+        denominated = [self.denominate_currency(c, date)
+                       for c in currencies]
+        for c in denominated:
+            self.try_caching(c, date)
+        return denominated
 
     def get_cached_currency(self, parser,
                             currency_name: str,
@@ -62,6 +71,19 @@ class CacheProxy(object):
                                                    date)
         # May be None
         return cached_item
+
+    def try_caching(self, currency, date: datetime.date,
+                    use_cache: bool=True):
+        """
+        Caches currency if cache is available and currency
+        object is not empty
+        """
+        if not use_cache:
+            return
+        is_today = date == datetime.date.today()
+        if not is_today and not currency.is_empty():
+            self._cache.cache_currency(self.short_name,
+                                       currency, date)
 
     def denominate_currency(self, currency,
                             date: datetime.date):
