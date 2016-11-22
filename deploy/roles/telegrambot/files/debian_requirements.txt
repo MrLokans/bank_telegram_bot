@@ -6,7 +6,7 @@ numpy==1.11.0
 pandas==0.18.0
 pyparsing==2.1.1
 python-dateutil==2.5.2
-python-telegram-bot==4.0.3
+python-telegram-bot==5.2.0
 pytz==2016.3
 requests==2.9.1
 scipy==0.17.0

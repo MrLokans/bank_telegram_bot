@@ -440,23 +440,23 @@ def create_bot(api_token):
 
     dispatcher = updater.dispatcher
 
-    dispatcher.addHandler(CommandHandler('start', start))
-    dispatcher.addHandler(CommandHandler('help', help_user))
-    dispatcher.addHandler(CommandHandler('course', course,
-                                         pass_args=True))
-    dispatcher.addHandler(CommandHandler('graph', show_currency_graph,
-                                         pass_args=True))
-    dispatcher.addHandler(CommandHandler('banks', list_banks))
-    dispatcher.addHandler(CommandHandler('set', set_default_bank,
-                                         pass_args=True))
-    dispatcher.addHandler(CommandHandler('best', best_course,
-                                         pass_args=True))
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CommandHandler('help', help_user))
+    dispatcher.add_handler(CommandHandler('course', course,
+                                          pass_args=True))
+    dispatcher.add_handler(CommandHandler('graph', show_currency_graph,
+                                          pass_args=True))
+    dispatcher.add_handler(CommandHandler('banks', list_banks))
+    dispatcher.add_handler(CommandHandler('set', set_default_bank,
+                                          pass_args=True))
+    dispatcher.add_handler(CommandHandler('best', best_course,
+                                          pass_args=True))
     inline_rate_handler = InlineQueryHandler(inline_rate)
-    dispatcher.addHandler(inline_rate_handler)
+    dispatcher.add_handler(inline_rate_handler)
 
     # log all errors
-    dispatcher.addErrorHandler(error)
+    dispatcher.add_error_handler(error)
 
     unknown_handler = RegexHandler(r'/.*', unknown)
-    dispatcher.addHandler(unknown_handler)
+    dispatcher.add_handler(unknown_handler)
     return updater
