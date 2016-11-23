@@ -6,7 +6,6 @@ import requests
 from bs4 import BeautifulSoup
 
 from bot.currency import Currency
-from bot.settings import logger
 from .base import BaseParser
 
 import logging
@@ -61,8 +60,8 @@ class BelgazpromParser(BaseParser):
                                cur_table: BeautifulSoup,
                                days_since_now=None) -> Sequence[Currency]:
         """
-            Parses BeautifulSoup table with exchanges rates and extracts
-            currency data
+        Parses BeautifulSoup table with exchanges rates and extracts
+        currency data
         """
         if not days_since_now:
             currencies = []
@@ -93,6 +92,8 @@ class BelgazpromParser(BaseParser):
     def get_all_currencies(self,
                            date: datetime.date=None,
                            use_cache=True) -> Sequence[Currency]:
+        logger.info("Belgazprom: getting all currencies "
+                    "for the {}".format(date))
         today = datetime.date.today()
         if date is None:
             date = today
@@ -102,16 +103,6 @@ class BelgazpromParser(BaseParser):
         s = self.__soup_from_response(r)
         currency_table = self.__get_currency_table(s)
         currencies = self.__get_currency_objects(currency_table)
-
-        if date < self.DENOMINATION_DATE:
-            for c in currencies:
-                c.multiplier = 10000
-        else:
-            for c in currencies:
-                c.multiplier = 1
-
-        for currency in currencies:
-            self.try_caching(currency, date, today, use_cache=use_cache)
         return currencies
 
     def get_currency_for_diff_date(self,
@@ -126,37 +117,17 @@ class BelgazpromParser(BaseParser):
                      currency_name: str="USD",
                      date: datetime.date=None,
                      use_cache: bool=True) -> Currency:
+        logger.info("Belgazprom: getting {}"
+                    "for the {}".format(currency_name, date))
         today = datetime.date.today()
         if date is None:
             date = today
         assert isinstance(date, datetime.date), "Incorrect date supplied"
 
-        is_today = date == today
-
-        cached_item = None
-        if not is_today:
-            cached_item = self._cache.get_cached_value(self.short_name,
-                                                       currency_name,
-                                                       date)
-        if cached_item:
-            if not hasattr(cached_item, 'multiplier'):
-                if date < self.DENOMINATION_DATE:
-                    cached_item.multiplier = 10000
-                else:
-                    cached_item.multiplier = 1
-            logger.info("Cached value found {}, returning".format(cached_item))
-            return cached_item
-
         currencies = self.get_all_currencies(date)
 
         for cur in currencies:
-
             if currency_name.upper() == cur.iso:
-                if date < self.DENOMINATION_DATE:
-                    cur.multiplier = 10000
-                else:
-                    cur.multiplier = 1
-                self.try_caching(cur, date, today, use_cache=use_cache)
                 return cur
         else:
             return Currency.empty_currency()

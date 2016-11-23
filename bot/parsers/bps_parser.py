@@ -79,15 +79,6 @@ class BPSParser(BaseParser):
         rows = self.__rate_rows(soup)
 
         currencies = set([self._currency_from_row(row) for row in rows])
-        if date < self.DENOMINATION_DATE:
-            for c in currencies:
-                c.multiplier = 10000
-        else:
-            for c in currencies:
-                c.multiplier = 1
-        for currency in currencies:
-            self.try_caching(currency, date, today, use_cache=use_cache)
-
         return currencies
 
     def get_currency(self, currency_name="USD", date=None, use_cache=True):
@@ -101,29 +92,9 @@ class BPSParser(BaseParser):
             msg = "Incorrect currency '{}', allowed values: {}"
             raise BotLoggedError(msg.format(currency_name, allowed))
 
-        is_today = date == today
-
-        cached_item = None
-        if not is_today:
-            cached_item = self._cache.get_cached_value(self.short_name,
-                                                       currency_name,
-                                                       date)
-        if cached_item:
-            if not hasattr(cached_item, 'multiplier'):
-                if date < self.DENOMINATION_DATE:
-                    cached_item.multiplier = 10000
-                else:
-                    cached_item.multiplier = 1
-            return cached_item
-
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
-                if date < self.DENOMINATION_DATE:
-                    currency.multiplier = 10000
-                else:
-                    currency.multiplier = 1
-                self.try_caching(currency, date, today, use_cache=use_cache)
                 return currency
         return Currency.empty_currency()
 
