@@ -66,12 +66,7 @@ class BelwebParser(BaseParser):
             rows = [row for row in currency_table.find_all('tr')][3:]
             curs = filter(lambda x: x is not None,
                           (self._currency_from_row(row) for row in rows))
-
-            curs = [c for c in self.denominate_currencies(curs, date)]
-        for currency in curs:
-            self.try_caching(currency, date,
-                             use_cache=self.is_cache_set())
-        return curs
+        return list(curs)
 
     def get_currency(self, currency_name="USD", date=None):
         if date is None:

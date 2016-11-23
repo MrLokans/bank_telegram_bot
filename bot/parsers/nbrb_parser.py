@@ -84,11 +84,6 @@ Date you are trying to request is to old, minimal date is {}
 
         results = [self._currency_from_xml_obj(tree, c)
                    for c in available_currencies]
-        for currency in results:
-            if date < self.DENOMINATION_DATE:
-                currency.multiplier = 10000
-            else:
-                currency.multiplier = 1
         return results
 
     def get_currency(self, currency_name="USD", date=None):
@@ -98,8 +93,4 @@ Date you are trying to request is to old, minimal date is {}
 
         _xml = self._response_text_for_date(date)
         currency = self._currency_from_xml_text(_xml, currency_name)
-        if date < self.DENOMINATION_DATE:
-            currency.multiplier = 10000
-        else:
-            currency.multiplier = 1
         return currency
