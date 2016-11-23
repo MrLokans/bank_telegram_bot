@@ -74,6 +74,9 @@ def log_exceptions(bot_func):
                             text=msg,
                             parse_mode=ParseMode.HTML)
             return
+        except Exception as e:
+            logger.exception("Unknown exception occured.")
+            return
     return wrapper
 
 
