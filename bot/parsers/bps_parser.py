@@ -24,8 +24,7 @@ class BPSParser(BaseParser):
     BASE_URL = "http://www.bps-sberbank.by/43257F17004E948D/currency_rates"
     DATE_FORMAT = "%Y.%m.%d"
 
-    def __init__(self, cache=None, parser="lxml", *args, **kwargs):
-        self._cache = cache
+    def __init__(self, parser="lxml", *args, **kwargs):
         self._parser = parser
 
     @classmethod
@@ -67,7 +66,7 @@ class BPSParser(BaseParser):
                     match.groupdict()["value"])
         raise BotLoggedError("Incorrect currency supplied: {}".format(cur))
 
-    def get_all_currencies(self, date=None, use_cache=True) -> Set[Currency]:
+    def get_all_currencies(self, date=None) -> Set[Currency]:
         """Get all available currencies for the given date
         (both sell and purchase)"""
         # FIXME: add caching
@@ -81,14 +80,14 @@ class BPSParser(BaseParser):
         currencies = set([self._currency_from_row(row) for row in rows])
         return currencies
 
-    def get_currency(self, currency_name="USD", date=None, use_cache=True):
+    def get_currency(self, currency_name="USD", date=None):
         """Get currency data for the given currency name"""
         today = datetime.date.today()
         if date is None:
             date = today
 
-        if currency_name.upper() not in BPSParser.allowed_currencies:
-            allowed = ", ".join(BPSParser.allowed_currencies)
+        if currency_name.upper() not in self.allowed_currencies:
+            allowed = ", ".join(self.allowed_currencies)
             msg = "Incorrect currency '{}', allowed values: {}"
             raise BotLoggedError(msg.format(currency_name, allowed))
 

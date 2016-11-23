@@ -21,8 +21,7 @@ class PriorbankParser(BaseParser):
 
     # p_p_col_pos=3&p_p_col_count=6&fromDate=08-05-2016&toDate=08-05-2016&channelIDs=3&currencies=all"
 
-    def __init__(self, parser="lxml", cache=None, *args, **kwargs):
-        self._cache = cache
+    def __init__(self, parser="lxml", *args, **kwargs):
         self._parser = parser
 
     @classmethod

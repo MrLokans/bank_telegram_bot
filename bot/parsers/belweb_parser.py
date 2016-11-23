@@ -1,15 +1,12 @@
 # coding: utf-8
 
 import datetime
-from typing import Sequence
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
-from bot.cache.mongo import MongoCurrencyCache
 from bot.currency import Currency
-from bot.settings import LOGGER_NAME, logger
 from .base import BaseParser
 
 
@@ -25,8 +22,7 @@ class BelwebParser(BaseParser):
                           'JPY', 'DKK', 'CHF', 'SEK',
                           'NOK', 'GBP', 'CZK', 'CAD')
 
-    def __init__(self, parser="html.parser", cache=None, *args, **kwargs):
-        self._cache = cache
+    def __init__(self, parser="html.parser", *args, **kwargs):
         self._parser = parser
 
     def _url_for_date(self, date: datetime.date) -> str:

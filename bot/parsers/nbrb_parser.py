@@ -30,11 +30,9 @@ class NBRBParser(BaseParser):
 
     def __init__(self,
                  parser: str="html.parser",
-                 cache=None,
                  *args, **kwargs) -> None:
         self.name = NBRBParser.name
         self.short_name = NBRBParser.short_name
-        self._cache = cache
         self._parser = parser
 
     @classmethod

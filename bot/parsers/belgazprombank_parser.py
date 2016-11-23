@@ -23,10 +23,9 @@ class BelgazpromParser(BaseParser):
     allowed_currencies = ('USD', 'EUR', 'RUB', 'BYR',
                           'GBP', 'UAH', 'CHF', 'PLN', 'BYN')
 
-    def __init__(self, parser="lxml", cache=None, *args, **kwargs):
+    def __init__(self, parser="lxml", *args, **kwargs):
         self.name = BelgazpromParser.name
         self.short_name = BelgazpromParser.short_name
-        self._cache = cache
         self._parser = parser
 
     def __get_response_for_the_date(self,
@@ -90,8 +89,7 @@ class BelgazpromParser(BaseParser):
                         buy=float(buy))
 
     def get_all_currencies(self,
-                           date: datetime.date=None,
-                           use_cache=True) -> Sequence[Currency]:
+                           date: datetime.date=None) -> Sequence[Currency]:
         logger.info("Belgazprom: getting all currencies "
                     "for the {}".format(date))
         today = datetime.date.today()
@@ -115,8 +113,7 @@ class BelgazpromParser(BaseParser):
 
     def get_currency(self,
                      currency_name: str="USD",
-                     date: datetime.date=None,
-                     use_cache: bool=True) -> Currency:
+                     date: datetime.date=None) -> Currency:
         logger.info("Belgazprom: getting {}"
                     "for the {}".format(currency_name, date))
         today = datetime.date.today()
