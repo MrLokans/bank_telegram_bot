@@ -9,8 +9,6 @@ from bot.settings import (
     DENOMINATION_MULTIPLIER
 )
 
-from threading import Lock
-
 
 class CacheProxy(object):
     """
@@ -32,11 +30,11 @@ class CacheProxy(object):
         """
         if date is None:
             date = datetime.date.today()
-
-        сurrency = self.get_cached_currency(parser, currency_name, date)
-        if сurrency is None:
+        currency = self.get_cached_currency(parser, currency_name, date)
+        if currency is None:
             currency = parser.get_currency(currency_name, date)
-        currency = self.denominate_currency(сurrency, date)
+        currency = self.denominate_currency(currency, date)
+        self.try_caching(parser, currency, date)
         return currency
 
     def get_all_currencies(self, parser,
@@ -51,7 +49,7 @@ class CacheProxy(object):
         denominated = [self.denominate_currency(c, date)
                        for c in currencies]
         for c in denominated:
-            self.try_caching(c, date)
+            self.try_caching(parser, c, date)
         return denominated
 
     def get_cached_currency(self, parser,
@@ -72,7 +70,8 @@ class CacheProxy(object):
         # May be None
         return cached_item
 
-    def try_caching(self, currency, date: datetime.date,
+    def try_caching(self, parser,
+                    currency, date: datetime.date,
                     use_cache: bool=True):
         """
         Caches currency if cache is available and currency
@@ -82,7 +81,7 @@ class CacheProxy(object):
             return
         is_today = date == datetime.date.today()
         if not is_today and not currency.is_empty():
-            self._cache.cache_currency(self.short_name,
+            self._cache.cache_currency(parser.short_name,
                                        currency, date)
 
     def denominate_currency(self, currency,
