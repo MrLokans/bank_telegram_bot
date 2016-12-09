@@ -274,3 +274,8 @@ def set_user_default_bank(user_id: str,
                           bank_name: str,
                           cache: Mapping[str, str]=settings.USER_BANK_SELECTION_CACHE) -> None:
     cache[user_id] = bank_name
+
+
+def is_image_cached(image_path: str, max_n: int=8) -> bool:
+    """Checks whether image with the given name has already been created"""
+    return os.path.exists(image_path)

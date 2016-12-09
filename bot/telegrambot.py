@@ -3,7 +3,7 @@
 import os
 from uuid import uuid4
 import datetime
-import functools
+
 from typing import Any, Dict, Tuple
 from collections import deque, namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -25,18 +25,14 @@ from telegram.ext import (
 
 from telegram.ext.dispatcher import run_async
 
-
-from bot.exceptions import BotLoggedError
 from bot.currency import Currency
+from bot.decorators import log_exceptions, log_statistics
 import bot.plotting as plotting
 import bot.utils as utils
 
 import bot.settings as settings
 from bot.settings import (
     DEFAULT_CURRENCY,
-    DEFAULT_PARSER_NAME,
-    LOCALIZATION_PATH,
-    USER_BANK_SELECTION_CACHE,
     logging
 )
 from bot.cache import RedisCache
@@ -60,36 +56,6 @@ default_cache = StrCacheAdapter(RedisCache(Currency, __name__),
 cache_proxy = CacheProxy(default_cache)
 
 logger = logging.getLogger('telegrambot')
-
-
-def log_exceptions(bot_func):
-    @functools.wraps(bot_func)
-    def wrapper(bot, update, *args, **kwargs):
-        try:
-            bot_func(bot, update, *args, **kwargs)
-        except BotLoggedError as e:
-            chat_id = update.message.chat_id
-            msg = str(e)
-            bot.sendMessage(chat_id=chat_id,
-                            text=msg,
-                            parse_mode=ParseMode.HTML)
-            return
-        except Exception as e:
-            logger.exception("Unknown exception occured.")
-            return
-    return wrapper
-
-
-def log_statistics(bot_func):
-    @functools.wraps(bot_func)
-    def wrapper(bot, update, *args, **kwargs):
-            message = update.message.text
-            user_id = str(update.message.from_user.id)
-            chat_id = update.message.chat_id
-            msg = "{} triggered, user_id: {}, chat_id {}"
-            logger.info(msg.format(message, user_id, chat_id))
-            bot_func(bot, update, *args, **kwargs)
-    return wrapper
 
 
 def start(bot, update):
@@ -231,7 +197,7 @@ def show_currency_graph(bot, update, args, **kwargs):
             logger.error("Error creating images folder: ".format(e))
     output_file = os.path.join(settings.IMAGES_FOLDER, plot_image_name)
 
-    if not is_image_cached(output_file):
+    if not utils.is_image_cached(output_file):
 
         # We use thread pool to asyncronously get pages
         currencies_deque = deque()
@@ -441,11 +407,6 @@ def inline_rate(bot, update):
         results.append(result)
 
     bot.answerInlineQuery(update.inline_query.id, results)
-
-
-def is_image_cached(image_path: str, max_n: int=8) -> bool:
-    """Checks whether image with the given name has already been created"""
-    return os.path.exists(image_path)
 
 
 class TelegramBot(object):
