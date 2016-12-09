@@ -10,7 +10,7 @@ import importlib
 import itertools
 import logging
 
-from typing import Sequence, Mapping, Any, Tuple, TypeVar
+from typing import Sequence, Mapping, Any, Tuple, TypeVar, Dict
 
 import bot.settings as settings
 
@@ -279,3 +279,21 @@ def set_user_default_bank(user_id: str,
 def is_image_cached(image_path: str, max_n: int=8) -> bool:
     """Checks whether image with the given name has already been created"""
     return os.path.exists(image_path)
+
+
+def get_best_currencies(currency: str) -> Dict[str, Tuple[str, Any]]:
+    """Get best sell and buy rates for available banks"""
+    parser_classes = get_parser_classes()
+    parsers = [parser(cache=default_cache) for parser in parser_classes
+               if parser.short_name != 'nbrb']
+    results = [(p.name, cache_proxy.get_currency(p, currency))
+               for p in parsers]
+    results = list(filter(lambda x: not x[1].is_empty(), results))
+    best_sell = list(sorted(results, key=lambda x: x[1].sell))[0]
+    best_buy = list(sorted(results, key=lambda x: x[1].buy))[0]
+
+    result = {
+        "buy": best_buy,
+        "sell": best_sell
+    }
+    return result
