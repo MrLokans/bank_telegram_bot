@@ -448,28 +448,49 @@ def is_image_cached(image_path: str, max_n: int=8) -> bool:
     return os.path.exists(image_path)
 
 
+class TelegramBot(object):
+
+    def __init__(self, token):
+        self._token = token
+        self._updater = Updater(token=token)
+        self._dispatcher = self._create_dispatcher(self._updater)
+
+    def add_handler(self, handler, *args, **kwargs):
+        self._dispatcher.add_handler(handler, *args, **kwargs)
+
+    def add_error_handler(self, error_handler, *args, **kwargs):
+        self._dispatcher.add_error_handler(error_handler, *args, **kwargs)
+
+    def start_polling(self, *args, **kwargs):
+        return self._updater.start_polling(*args, **kwargs)
+
+    def idle(self, *args, **kwargs):
+        return self._updater.idle(*args, **kwargs)
+
+    def _create_dispatcher(self, updater):
+        return updater.dispatcher
+
+
 def create_bot(api_token):
-    updater = Updater(token=api_token)
+    bot = TelegramBot(token=api_token)
 
-    dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler('start', start))
-    dispatcher.add_handler(CommandHandler('help', help_user))
-    dispatcher.add_handler(CommandHandler('course', course,
-                                          pass_args=True))
-    dispatcher.add_handler(CommandHandler('graph', show_currency_graph,
-                                          pass_args=True))
-    dispatcher.add_handler(CommandHandler('banks', list_banks))
-    dispatcher.add_handler(CommandHandler('set', set_default_bank,
-                                          pass_args=True))
-    dispatcher.add_handler(CommandHandler('best', best_course,
-                                          pass_args=True))
+    bot.add_handler(CommandHandler('start', start))
+    bot.add_handler(CommandHandler('help', help_user))
+    bot.add_handler(CommandHandler('course', course,
+                                   pass_args=True))
+    bot.add_handler(CommandHandler('graph', show_currency_graph,
+                                   pass_args=True))
+    bot.add_handler(CommandHandler('banks', list_banks))
+    bot.add_handler(CommandHandler('set', set_default_bank,
+                                   pass_args=True))
+    bot.add_handler(CommandHandler('best', best_course,
+                                   pass_args=True))
     inline_rate_handler = InlineQueryHandler(inline_rate)
-    dispatcher.add_handler(inline_rate_handler)
+    bot.add_handler(inline_rate_handler)
 
     # log all errors
-    dispatcher.add_error_handler(error)
+    bot.add_error_handler(error)
 
     unknown_handler = RegexHandler(r'/.*', unknown)
-    dispatcher.add_handler(unknown_handler)
-    return updater
+    bot.add_handler(unknown_handler)
+    return bot
