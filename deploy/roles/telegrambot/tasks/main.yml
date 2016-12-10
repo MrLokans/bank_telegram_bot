@@ -109,15 +109,6 @@
       group: "{{ bot_group }}"
       mode: 0644
 
-  - name: Check if wheel for matplotlib exists
-    stat: 
-      path: "/home/{{ bot_user }}/downloads/wheels/{{ matplotlib_binary }}"
-    register: mtpltlib_file
-
-  - name: Debugging matplotlib state
-    debug:
-      var: mtpltlib_file
-
   # TODO: place all wheels in a single folder
   - name: Install bot's dependencies
     command: "{{ project_virtualenv_folder }}bin/pip install -r {{ project_root_dir }}bot/requirements.txt"
