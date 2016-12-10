@@ -14,6 +14,7 @@ from typing import Sequence, Mapping, Any, Tuple, TypeVar, Dict
 
 import bot.settings as settings
 
+from bot.adapters import cache_proxy, default_cache
 from bot.exceptions import BotLoggedError, BotArgumentParsingError
 from bot.currency import Currency
 
