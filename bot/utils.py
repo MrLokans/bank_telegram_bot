@@ -15,7 +15,11 @@ from typing import Sequence, Mapping, Any, Tuple, TypeVar, Dict
 import bot.settings as settings
 
 from bot.adapters import cache_proxy, default_cache
-from bot.exceptions import BotLoggedError, BotArgumentParsingError
+from bot.exceptions import (
+    BotArgumentParsingError,
+    BotLoggedError,
+    BotParserLookupError
+)
 from bot.currency import Currency
 
 
@@ -201,7 +205,11 @@ def parser_class_from_module(module):
 
 
 def get_parser(parser_name: str):
-    """Gets parser by its name or short name."""
+    """
+    Gets parser class by its name or short name.
+
+    Raises BotParserLookupError error in case parser is not found.
+    """
     parser_name = parser_name.lower()
     parser_classes = get_parser_classes()
     assert len(parser_classes) > 0
@@ -214,9 +222,8 @@ def get_parser(parser_name: str):
             print("Parser found: {}".format(parser))
             return parser
     else:
-        # FIXME: somehow select parser not relying on its order
-        parser = parser_classes[1]
-    return parser
+        error_msg = 'Error finding parser: "{}"'.format(parser_name)
+        raise BotParserLookupError(error_msg)
 
 
 def sort_currencies(currencies: Sequence[Currency]) -> Sequence[Currency]:
