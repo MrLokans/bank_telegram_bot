@@ -1,9 +1,9 @@
-pandas==0.19.1
-seaborn==0.7.1
-scipy==0.18.1
-matplotlib==1.5.3
+pandas==0.20.3
+seaborn==0.8
+scipy==0.19.1
+matplotlib==2.0.2
 python_telegram_bot==5.2.0
 redis==2.10.5
-requests==2.12.3
-beautifulsoup4==4.5.1
-lxml==3.6.4
+requests==2.18.3
+beautifulsoup4==4.6.0
+lxml==3.8.0
