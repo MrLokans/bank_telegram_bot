@@ -49,17 +49,17 @@ class TestParserListObtaining(unittest.TestCase):
         with self.assertRaises(BotParserLookupError):
             get_parser(self.NON_EXISTING_PARSER_NAME)
 
-    # def test_NBRB_parser(self):
-    #     self._regression_test_for_parser('nbrb')
+    def test_NBRB_parser(self):
+        self._regression_test_for_parser('nbrb')
 
-    # def test_BGP_parser(self):
-    #     self._regression_test_for_parser('bgp')
+    def test_BGP_parser(self):
+        self._regression_test_for_parser('bgp')
 
     def test_ALFABANK_parser(self):
         self._regression_test_for_parser('alfabank')
 
-    # def test_PRIOBRBANK_parser(self):
-    #     self._regression_test_for_parser('prbp')
+    def test_PRIOBRBANK_parser(self):
+        self._regression_test_for_parser('prbp')
 
-    # def test_BELWEB_parser(self):
-    #     self._regression_test_for_parser('bwb')
+    def test_BELWEB_parser(self):
+        self._regression_test_for_parser('bwb')
