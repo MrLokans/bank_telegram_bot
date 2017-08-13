@@ -7,6 +7,7 @@ import requests
 from bot.currency import Currency
 from bot.exceptions import BotLoggedError
 from bot.parsers.base import BaseParser
+from bot.settings import DENOMINATION_DATE, DENOMINATION_MULTIPLIER
 
 
 class PriorbankParser(BaseParser):
@@ -83,8 +84,8 @@ class PriorbankParser(BaseParser):
         currencies = self.get_all_currencies(date=date)
         for currency in currencies:
             if currency.iso.upper() == currency_name:
-                if date < self.DENOMINATION_DATE:
-                    currency.multiplier = 10000
+                if date < DENOMINATION_DATE:
+                    currency.multiplier = DENOMINATION_MULTIPLIER
                 else:
                     currency.multiplier = 1
                 return currency
