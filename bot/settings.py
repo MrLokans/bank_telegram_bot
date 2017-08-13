@@ -9,10 +9,11 @@ import re
 import tempfile
 
 
-BASE_DIR = os.path.abspath(os.path.dirname(__name__))
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DEFAULT_CURRENCY = "usd"
 DEFAULT_PARSER_MODULE = "belgazprombank_parser"
 DEFAULT_PARSER_NAME = "bgp"
+DEFAULT_PARSER_NAME = "nbrb"
 PARSERS_DIR = os.path.join("bot", "parsers")
 PIDFILE = os.path.join(tempfile.gettempdir(), "telegrambot.pid")
 LOCALIZATION_PATH = os.path.join(BASE_DIR, "locale")
@@ -26,7 +27,8 @@ DATE_REGEX = re.compile(r"-d(?P<date_diff>[\d]+)")
 
 # logging settings
 LOGGER_NAME = "bankparser"
-LOGGING_SETTINGS_FILE = os.path.join(BASE_DIR, "logging.json")
+LOGGING_SETTINGS_FILENAME = "logging.json"
+LOGGING_SETTINGS_FILE = os.path.join(BASE_DIR, LOGGING_SETTINGS_FILENAME)
 
 if os.path.exists(LOGGING_SETTINGS_FILE):
     with open(LOGGING_SETTINGS_FILE) as f:

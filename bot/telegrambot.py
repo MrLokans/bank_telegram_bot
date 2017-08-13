@@ -8,14 +8,20 @@ from telegram.ext import (
 )
 
 import bot.commands as commands
+import bot.settings as bot_settings
 
 
 class TelegramBot(object):
+    """
+    Wrapper class representing bot.
+    """
 
     def __init__(self, token):
         self._token = token
         self._updater = Updater(token=token)
         self._dispatcher = self._create_dispatcher(self._updater)
+        self.log = bot_settings.logger
+        self.log.info('Starting the telegram bot.')
 
     def add_handler(self, handler, *args, **kwargs):
         self._dispatcher.add_handler(handler, *args, **kwargs)
@@ -33,7 +39,11 @@ class TelegramBot(object):
         return updater.dispatcher
 
 
-def create_bot(api_token):
+def create_bot(api_token: str):
+    """
+    Factory creating telegram Bot.
+    """
+
     bot = TelegramBot(token=api_token)
 
     bot.add_handler(CommandHandler('start', commands.start))
