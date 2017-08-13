@@ -11,8 +11,8 @@ class Currency(object):
                  multiplier: int=1) -> None:
         self.name = name
         self.iso = iso
-        self.sell = sell
-        self.buy = buy
+        self.sell = sell or 0.0
+        self.buy = buy or 0.0
         self.multiplier = multiplier
 
     def __repr__(self) -> str:

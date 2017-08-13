@@ -33,7 +33,7 @@ class BelwebParser(BaseParser):
     def _currency_soup_for_date(self, date: datetime.date) -> BeautifulSoup:
         url = self._url_for_date(date)
         resp = requests.get(url)
-        return BeautifulSoup(resp.text)
+        return BeautifulSoup(resp.text, self._parser)
 
     def _currency_from_row(self, row: BeautifulSoup) -> Currency:
         cells = row.find_all('td')

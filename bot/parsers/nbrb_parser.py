@@ -56,8 +56,10 @@ Date you are trying to request is to old, minimal date is {}
         c = res[0]
 
         name = iso = c.find('CharCode').text
-        sell_value = c.find('Rate').text
-
+        try:
+            sell_value = float(c.find('Rate').text)
+        except ValueError:
+            sell_value = 0.0
         c = Currency(name, iso, sell_value, None)
         return c
 

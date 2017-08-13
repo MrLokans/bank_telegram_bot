@@ -250,8 +250,8 @@ def format_currency_string(cur: Currency) -> str:
     """Formats currency to be sent to user"""
     format_s = '<b>{:<5}</b>{:<8.3f}{:<8.3f}'
     s = format_s.format(cur.iso + ":",
-                        '-' if cur.buy is None else cur.buy,
-                        '-' if cur.sell is None else cur.sell)
+                        cur.buy,
+                        cur.sell)
     return s
 
 
